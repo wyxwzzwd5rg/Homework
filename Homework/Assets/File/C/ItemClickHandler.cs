@@ -5,17 +5,28 @@ public class ItemClickHandler : MonoBehaviour
     public Sprite itemSprite; // 物品的图片
     public string itemId;    // 物品的唯一ID (非常重要！)
 
-    private void Start()
+    // 【修改点1】：去掉Start()方法中的检查逻辑
+
+    /// <summary>
+    /// 当物体被鼠标点击时调用 (适用于3D物体或2D Collider)
+    /// </summary>
+    void OnMouseDown()
     {
-        // 【关键】在场景加载时，检查这个物品是否已经被收集过
-        if (GameData.IsItemCollected(itemId))
-        {
-            // 如果已经被收集，则在场景加载时就隐藏它
-            gameObject.SetActive(false);
-        }
+        CollectItem();
     }
 
-    void OnMouseDown()
+    /// <summary>
+    /// 公共的点击处理方法，用于UI Button的OnClick事件绑定
+    /// </summary>
+    public void OnClick()
+    {
+        CollectItem();
+    }
+
+    /// <summary>
+    /// 私有的核心收集逻辑方法
+    /// </summary>
+    private void CollectItem()
     {
         // 检查是否已经收集过，避免重复操作
         if (GameData.IsItemCollected(itemId))
@@ -41,5 +52,13 @@ public class ItemClickHandler : MonoBehaviour
         {
             Debug.LogError("BackpackManager.Instance 或 itemSprite 未赋值！");
         }
+    }
+
+    // 【修改点2】：新增一个公共方法，用于在抽屉打开时检查并设置物品状态
+    public void CheckAndSetActive()
+    {
+        // 当抽屉打开时，调用这个方法
+        // 如果物品未被收集，则显示；如果已被收集，则隐藏
+        gameObject.SetActive(!GameData.IsItemCollected(itemId));
     }
 }

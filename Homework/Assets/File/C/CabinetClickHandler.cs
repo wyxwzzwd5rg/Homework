@@ -7,8 +7,10 @@ public class CabinetClickHandler : MonoBehaviour
 
     void OnMouseDown()
     {
+
         // 点击柜子时，禁用原摄像机，启用俯视摄像机
         Camera2.gameObject.SetActive(false);
         cabinetCamera.gameObject.SetActive(true);
+        ViewManager.Instance.EnterCabinetView();
     }
 }

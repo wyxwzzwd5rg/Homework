@@ -8,6 +8,9 @@ public class DrawerController : MonoBehaviour
     public Sprite closedSprite;  // 关闭状态图片
     public Sprite openSprite;    // 打开状态图片
 
+    [Header("道具设置")]
+    public GameObject propInDrawer; // 抽屉内的道具（拖入Unity编辑器）
+
     [Header("动画设置")]
     public float moveDistance = 80f;  // 打开时移动的距离（Y轴负方向为向下）
     public float animDuration = 0.3f; // 动画持续时间
@@ -54,6 +57,31 @@ public class DrawerController : MonoBehaviour
         // 切换图片和尺寸
         drawerImage.sprite = isOpen ? openSprite : closedSprite;
         drawerImage.rectTransform.sizeDelta = isOpen ? openSize : closedSize;
+
+        if (propInDrawer != null)
+        {
+            if (isOpen)
+            {
+                Debug.Log("抽屉打开，尝试显示道具: " + propInDrawer.name); // <--- 添加这行
+                // 【修改点】：当抽屉打开时，先检查物品是否被收集，再决定是否显示
+                ItemClickHandler itemHandler = propInDrawer.GetComponent<ItemClickHandler>();
+                if (itemHandler != null)
+                {
+                    itemHandler.CheckAndSetActive();
+                }
+                else
+                {
+                    // 如果没有ItemClickHandler脚本，直接显示
+                    propInDrawer.SetActive(true);
+                }
+            }
+            else
+            {
+                // 抽屉关闭时，直接隐藏道具
+                propInDrawer.SetActive(false);
+            }
+
+        }
 
         // 计算目标位置（移动方向：向下）
         Vector3 targetPos = closedPosition;
