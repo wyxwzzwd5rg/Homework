@@ -3,7 +3,12 @@ guid: 4a4ff867b9a307b46bf74a73f3cf532c
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - selectedItem: {instanceID: 0}
+  - mirrorPieceSprite: {instanceID: 0}
+  - magnifierSprite: {instanceID: 0}
+  - solventSprite: {instanceID: 0}
+  - umbrellaSprite: {instanceID: 0}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 
