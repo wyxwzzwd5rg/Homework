@@ -5,33 +5,38 @@ public class HandDragger : MonoBehaviour, IDragHandler, IEndDragHandler
 {
     public bool isHourHand; // 标记是否为时针（否则为分针）
     private Transform handTransform;
-    private Transform clockTransform; // 时钟表盘的transform（用于获取中心位置）
-
+    // private Transform clockTransform; // 时钟表盘的transform（用于获取中心位置）
+    public Transform customPivot;
     void Awake()
     {
         handTransform = transform;
         // 获取时钟表盘的transform（假设父对象是时钟表盘）
-        clockTransform = handTransform.parent;
+        // clockTransform = handTransform.parent;
     }
 
     public void OnDrag(PointerEventData eventData)
     {
-        // 1. 计算鼠标相对于时钟表盘中心的角度
+        // 新增：校验自定义中心点是否配置，未配置则用默认父对象（兼容旧逻辑）
+        if (customPivot == null)
+        {
+            customPivot = handTransform.parent;
+            Debug.LogWarning("未配置自定义中心点，自动使用父对象作为中心点");
+        }
+
+        // 1. 计算鼠标相对于【自定义中心点】的角度（核心修改点）
         Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(eventData.position);
-        mouseWorldPos.z = clockTransform.position.z; // 确保在同一平面
-        Vector3 direction = mouseWorldPos - clockTransform.position; // 从表盘中心指向鼠标
-        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg - 90f; // 调整0度指向12点
+        mouseWorldPos.z = customPivot.position.z; // 确保与中心点在同一平面（避免3D偏移）
+                                                  // 从【自定义中心点】指向鼠标，而非原父对象
+        Vector3 direction = mouseWorldPos - customPivot.position;
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg - 90f; // 0度指向12点的逻辑不变
 
-        // 2. 处理角度循环（确保角度在0°~360°范围内，避免-180°~180°的显示问题）
+        // 后续角度循环、对齐刻度、应用旋转的逻辑保持不变...
         angle = Mathf.Repeat(angle, 360f);
-
-        // 3. 对齐到刻度（时针30°/格，分针6°/格）
         if (isHourHand)
-            angle = Mathf.Round(angle / 30f) * 30f; // 时针每小时30度
+            angle = Mathf.Round(angle / 30f) * 30f;
         else
-            angle = Mathf.Round(angle / 6f) * 6f; // 分针每分钟6度
+            angle = Mathf.Round(angle / 6f) * 6f;
 
-        // 4. 应用旋转（使用localEulerAngles，确保绕表盘中心旋转）
         handTransform.localEulerAngles = new Vector3(0, 0, angle);
     }
 
