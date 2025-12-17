@@ -3,129 +3,120 @@ using UnityEngine.UI;
 
 public class CameraAndUISwitcher : MonoBehaviour
 {
-    [Header("³¡¾°ÉãÏñ»ú")]
-    public Camera camera1;
-    public Camera camera2;
-    public Camera camera3;
-    public Camera camera4;
+    // ä¿ç•™ä½ åŸæœ‰1-4å·æ‘„åƒæœºçš„å˜é‡ï¼ˆä¸ä¿®æ”¹ï¼‰
+    public Camera Camera1;
+    public Camera Camera2;
+    public Camera Camera3;
+    public Camera Camera4;
+    private int currentCamera = 1;
 
-    [Header("UI°´Å¥")]
-    public Button btnLeft;
-    public Button btnRight;
+    // æ–°å¢ï¼šèƒŒåŒ…Canvaså¼•ç”¨ï¼ˆæ‹–å…¥ä½ çš„èƒŒåŒ…Canvasï¼‰
+    public Canvas BackpackCanvas;
+    // æ–°å¢ï¼šå­˜å‚¨æ‰€æœ‰éœ€è¦å…³è”èƒŒåŒ…çš„æ‘„åƒæœºï¼ˆåŒ…æ‹¬1-4å·+åç»­æ–°å¢ï¼‰
+    public Camera[] allCamerasForBackpack;
 
-    [Header("UI»­²¼")]
-    public Canvas uiCanvas;
+    [Header("UIæŒ‰é’®")]
+    public Button BtnLeft;
+    public Button BtnRight;
 
-    [Header("°´Å¥ÉèÖÃ")]
-    [Tooltip("°´Å¥Óë³¡¾°±ßÔµµÄ¾àÀë£¨Ô½´óÔ½¿¿Íâ£©")]
-    public float offset = 5f;
-    [Tooltip("°´Å¥´óĞ¡£¨±ÜÃâÌ«Ğ¡¿´²»¼û£©")]
-    public Vector2 buttonSize = new Vector2(100, 100);
+    [Header("UIç”»å¸ƒ")]
+    public Canvas UiCanvas;
 
-    private int currentIndex = 0;
-    private Camera[] cameras;
-    private Camera currentCamera;
-    private RectTransform leftRect;
-    private RectTransform rightRect;
+    [Header("å¸ƒå±€å‚æ•°")]
+    public int Offset = 10;
+    public Vector2 ButtonSize = new Vector2(1, 1);
 
     void Start()
     {
-        // ³õÊ¼»¯×é¼şÒıÓÃ
-        cameras = new Camera[] { camera1, camera2, camera3, camera4 };
-        leftRect = btnLeft.GetComponent<RectTransform>();
-        rightRect = btnRight.GetComponent<RectTransform>();
+        // æ–°å¢ï¼šæ¸¸æˆå¯åŠ¨æ—¶å¼ºåˆ¶æ¿€æ´»Camera1ï¼Œç¦ç”¨å…¶ä»–æ‘„åƒæœº
+        Camera1.gameObject.SetActive(true);
+        Camera2.gameObject.SetActive(false);
+        Camera3.gameObject.SetActive(false);
+        Camera4.gameObject.SetActive(false);
 
-        // Ç¿ÖÆÉèÖÃ°´Å¥´óĞ¡£¨±ÜÃâ¿´²»¼û£©
-        leftRect.sizeDelta = buttonSize;
-        rightRect.sizeDelta = buttonSize;
+        // æ–°å¢ï¼šå°†èƒŒåŒ…Canvaså’Œåœºæ™¯UI Canvasç»‘å®šåˆ°Camera1
+        if (UiCanvas != null)
+        {
+            UiCanvas.worldCamera = Camera1;
+        }
+        if (BackpackCanvas != null)
+        {
+            BackpackCanvas.renderMode = RenderMode.ScreenSpaceCamera;
+            BackpackCanvas.worldCamera = Camera1;
+            BackpackCanvas.planeDistance = 1; // ç¡®ä¿UIæ¸²æŸ“è·ç¦»
+        }
+        // åŸæœ‰æŒ‰é’®ç»‘å®šé€»è¾‘ï¼ˆå®Œå…¨ä¿ç•™ï¼‰
+        BtnLeft.onClick.AddListener(SwitchLeft);
+        BtnRight.onClick.AddListener(SwitchRight);
 
-        // ³õÊ¼¼¤»îµÚÒ»¸öÉãÏñ»ú
-        SetActiveCamera(currentIndex);
-
-        // °ó¶¨°´Å¥ÊÂ¼ş
-        btnLeft.onClick.AddListener(OnLeftClick);
-        btnRight.onClick.AddListener(OnRightClick);
+        // æ–°å¢ï¼šåˆå§‹åŒ–æ—¶å°†èƒŒåŒ…å…³è”åˆ°ç¬¬ä¸€ä¸ªæ¿€æ´»çš„æ‘„åƒæœº
+        if (BackpackCanvas != null && allCamerasForBackpack.Length > 0)
+        {
+            BackpackCanvas.worldCamera = GetActiveCamera();
+            BackpackCanvas.gameObject.SetActive(true);
+        }
     }
 
     void Update()
     {
-        if (currentCamera != null)
+        // æ–°å¢ï¼šæ¯ä¸€å¸§æ£€æµ‹å½“å‰æ¿€æ´»çš„æ‘„åƒæœºï¼ŒåŒæ­¥å…³è”èƒŒåŒ…Canvas
+        Camera activeCam = GetActiveCamera();
+        if (activeCam != null && BackpackCanvas != null)
         {
-            UpdateButtonPositions();
+            BackpackCanvas.worldCamera = activeCam;
         }
     }
 
-    // ÇĞ»»¼¤»îµÄÉãÏñ»ú
-    void SetActiveCamera(int index)
+    // ä¿ç•™ä½ åŸæœ‰1-4å·æ‘„åƒæœºåˆ‡æ¢é€»è¾‘ï¼ˆå®Œå…¨ä¸ä¿®æ”¹ï¼‰
+    void SwitchLeft()
     {
-        // ½ûÓÃËùÓĞÉãÏñ»ú£¬¼¤»îÄ¿±êÉãÏñ»ú
-        for (int i = 0; i < cameras.Length; i++)
+        currentCamera--;
+        if (currentCamera < 1) currentCamera = 4;
+        SwitchCamera(currentCamera);
+    }
+
+    void SwitchRight()
+    {
+        currentCamera++;
+        if (currentCamera > 4) currentCamera = 1;
+        SwitchCamera(currentCamera);
+    }
+
+    void SwitchCamera(int camNum)
+    {
+        // åŸæœ‰1-4å·æ‘„åƒæœºæ¿€æ´»é€»è¾‘ï¼ˆå®Œå…¨ä¿ç•™ï¼‰
+        Camera1.gameObject.SetActive(camNum == 1);
+        Camera2.gameObject.SetActive(camNum == 2);
+        Camera3.gameObject.SetActive(camNum == 3);
+        Camera4.gameObject.SetActive(camNum == 4);
+
+        // åŸæœ‰UIç”»å¸ƒå…³è”é€»è¾‘ï¼ˆä¿ç•™ï¼‰
+        Camera currentActiveCam = camNum == 1 ? Camera1 : (camNum == 2 ? Camera2 : (camNum == 3 ? Camera3 : Camera4));
+        if (UiCanvas != null)
         {
-            if (cameras[i] != null)
-                cameras[i].gameObject.SetActive(i == index);
+            UiCanvas.worldCamera = currentActiveCam;
         }
-        currentCamera = cameras[index];
-
-        // È·±£Canvas¹ØÁªµ±Ç°ÉãÏñ»ú
-        if (uiCanvas != null)
-            uiCanvas.worldCamera = currentCamera;
     }
 
-    // ¸üĞÂ°´Å¥Î»ÖÃ£¨È·±£ÔÚµ±Ç°ÉãÏñ»úÊÓÒ°ÄÚ£©
-    void UpdateButtonPositions()
+    // æ–°å¢ï¼šè·å–å½“å‰åœºæ™¯ä¸­æ¿€æ´»çš„æ‘„åƒæœºï¼ˆå…¼å®¹1-4å·+æ–°å¢æ‘„åƒæœºï¼‰
+    private Camera GetActiveCamera()
     {
-        // ¼ÆËãÉãÏñ»úÊÓÒ°·¶Î§£¨Õı½»Ä£Ê½£©
-        float orthoSize = currentCamera.orthographicSize;
-        float aspectRatio = currentCamera.aspect;
-        float halfWidth = orthoSize * aspectRatio; // ÊÓÒ°°ë¿í
-        float halfHeight = orthoSize; // ÊÓÒ°°ë¸ß
+        // å…ˆæ£€æŸ¥1-4å·æ‘„åƒæœºæ˜¯å¦æœ‰æ¿€æ´»çš„ï¼ˆæŒ‰é’®åˆ‡æ¢çš„æƒ…å†µï¼‰
+        if (Camera1.isActiveAndEnabled) return Camera1;
+        if (Camera2.isActiveAndEnabled) return Camera2;
+        if (Camera3.isActiveAndEnabled) return Camera3;
+        if (Camera4.isActiveAndEnabled) return Camera4;
 
-        // ÉãÏñ»úÎ»ÖÃ£¨ÊÀ½ç×ø±ê£©
-        Vector3 camPos = currentCamera.transform.position;
+        // è‹¥1-4å·éƒ½æœªæ¿€æ´»ï¼Œæ£€æŸ¥æ–°å¢çš„æ‘„åƒæœºæ•°ç»„
+        foreach (Camera cam in allCamerasForBackpack)
+        {
+            if (cam != null && cam.isActiveAndEnabled)
+            {
+                return cam;
+            }
+        }
 
-        // ¼ÆËã°´Å¥ÊÀ½ç×ø±ê£¨È·±£ÔÚÊÓÒ°±ßÔµÄÚ£©
-        Vector3 leftPos = new Vector3(
-            camPos.x - halfWidth + (leftRect.sizeDelta.x / 200f), // ×ó±ßÔµÄÚ£¨ÊÊÅäUIÏñËØ£©
-            camPos.y,
-            camPos.z + 1f // ÉãÏñ»úÇ°·½£¬²»±»ÕÚµ²
-        );
-        Vector3 rightPos = new Vector3(
-            camPos.x + halfWidth - (rightRect.sizeDelta.x / 200f), // ÓÒ±ßÔµÄÚ
-            camPos.y,
-            camPos.z + 1f
-        );
-
-        // ×ª»»ÊÀ½ç×ø±êµ½UI×ø±ê
-        leftRect.localPosition = WorldToUI(leftPos);
-        rightRect.localPosition = WorldToUI(rightPos);
-    }
-
-    // ÊÀ½ç×ø±ê×ªUI×ø±ê£¨¼æÈİÈÎÒâÉãÏñ»úÎ»ÖÃ£©
-    Vector2 WorldToUI(Vector3 worldPos)
-    {
-        // ÊÀ½ç×ø±ê ¡ú ÆÁÄ»×ø±ê
-        Vector2 screenPos = RectTransformUtility.WorldToScreenPoint(currentCamera, worldPos);
-        // ÆÁÄ»×ø±ê ¡ú UI¾Ö²¿×ø±ê
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            uiCanvas.GetComponent<RectTransform>(),
-            screenPos,
-            currentCamera,
-            out Vector2 uiPos
-        );
-        return uiPos;
-    }
-
-    // ×ó°´Å¥ÇĞ»»
-    void OnLeftClick()
-    {
-        currentIndex = (currentIndex - 1 + cameras.Length) % cameras.Length;
-        SetActiveCamera(currentIndex);
-    }
-
-    // ÓÒ°´Å¥ÇĞ»»
-    void OnRightClick()
-    {
-        currentIndex = (currentIndex + 1) % cameras.Length;
-        SetActiveCamera(currentIndex);
+        // å…œåº•ï¼šè¿”å›ç¬¬ä¸€ä¸ªå¯ç”¨çš„æ‘„åƒæœº
+        return allCamerasForBackpack.Length > 0 ? allCamerasForBackpack[0] : null;
     }
 }

@@ -29,6 +29,9 @@ public class BackpackManager : MonoBehaviour
 
     // 存储收集的物品（Sprite格式，对应物品图片）
     private static List<Sprite> collectedItems = new List<Sprite>();
+    [Header("空槽背景")]
+    public Sprite emptySlotSprite;
+
 
     void Awake()
     {
@@ -63,32 +66,74 @@ public class BackpackManager : MonoBehaviour
     }
 
     // 更新背包UI：将收集的物品显示到物品槽中
+    // private void UpdateBackpackUI()
+    // {
+    //     if (itemSlots == null || itemSlots.Count == 0)
+    //     {
+    //         Debug.LogError("物品槽列表为空，请检查关联！");
+    //         return;
+    //     }
+    //     // 先清空所有物品槽
+    //     foreach (var slot in itemSlots)
+    //     {
+
+    //         slot.sprite = null; // 清空图片
+    //         slot.enabled = true;
+    //         slot.sprite = emptySlotSprite;
+    //     }
+
+    //     // 显示收集的物品
+    //     for (int i = 0; i < collectedItems.Count; i++)
+    //     {
+    //         if (i < itemSlots.Count) // 避免超出物品槽数量
+    //         {
+    //             itemSlots[i].sprite = collectedItems[i]; // 给槽赋值物品图片
+
+    //         }
+    //         else
+    //         {
+    //             Debug.Log("背包已满！");
+    //             break;
+    //         }
+    //     }
+    // }
+
     private void UpdateBackpackUI()
     {
+        // 调试1：检查itemSlots列表是否为空
         if (itemSlots == null || itemSlots.Count == 0)
         {
-            Debug.LogError("物品槽列表为空，请检查关联！");
+            Debug.LogError("[背包调试] itemSlots列表为空！请在Inspector中拖入ItemSlot的Image组件");
             return;
         }
-        // 先清空所有物品槽
-        foreach (var slot in itemSlots)
+        Debug.Log($"[背包调试] itemSlots数量：{itemSlots.Count}");
+
+        // 调试2：遍历每个ItemSlot，打印激活状态、尺寸、位置
+        for (int i = 0; i < itemSlots.Count; i++)
         {
-            slot.sprite = null; // 清空图片
-            slot.enabled = false; // 隐藏槽（无物品时不显示）
+            Image slot = itemSlots[i];
+            if (slot == null)
+            {
+                Debug.LogError($"[背包调试] 第{i}个ItemSlot为空！");
+                continue;
+            }
+
+            // 强制激活ItemSlot及其父物体
+            slot.gameObject.SetActive(true);
+            slot.transform.parent.gameObject.SetActive(true); // 激活BackpackPanel
+            slot.enabled = true;
+
+            // 打印关键信息
+            Debug.Log($"[背包调试] 第{i}个ItemSlot：激活状态={slot.gameObject.activeSelf}，Image启用={slot.enabled}，尺寸={slot.rectTransform.sizeDelta}，位置={slot.rectTransform.anchoredPosition}，Sprite={slot.sprite?.name ?? "无"}");
         }
 
-        // 显示收集的物品
+        // 原有逻辑：显示收集的物品
         for (int i = 0; i < collectedItems.Count; i++)
         {
-            if (i < itemSlots.Count) // 避免超出物品槽数量
+            if (i < itemSlots.Count)
             {
-                itemSlots[i].sprite = collectedItems[i]; // 给槽赋值物品图片
-                itemSlots[i].enabled = true; // 显示槽
-            }
-            else
-            {
-                Debug.Log("背包已满！");
-                break;
+                itemSlots[i].sprite = collectedItems[i];
+                Debug.Log($"[背包调试] 第{i}个槽位赋值物品：{collectedItems[i].name}");
             }
         }
     }
