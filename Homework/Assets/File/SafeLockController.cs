@@ -81,8 +81,12 @@ public class SafeLockController : MonoBehaviour
 
         if (disableColliderAfterUnlock)
         {
-            Collider col = GetComponent<Collider>();
-            if (col != null) col.enabled = false;
+            // 3D 或 2D 碰撞体都尝试禁用，避免再次被点击
+            Collider col3D = GetComponent<Collider>();
+            if (col3D != null) col3D.enabled = false;
+
+            Collider2D col2D = GetComponent<Collider2D>();
+            if (col2D != null) col2D.enabled = false;
         }
         UpdateDisplay("解锁");
     }
