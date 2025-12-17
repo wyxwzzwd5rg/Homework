@@ -13,7 +13,7 @@ public class BackpackManager : MonoBehaviour
     public string mirrorPieceName = "jingpian";       // 镜片
     public string knifeName = "xiaodao";               // 小刀
     public string magnifierName = "fangdajing";        // 放大镜
-    public string solventName = "rongjiej";            // 溶解剂
+    public string solventName = "rongjieji";            // 溶解剂
     public string umbrellaName = "yusan";              // 雨伞
     public Sprite mirrorPieceSprite;   // 保险柜1奖励
     public Sprite magnifierSprite;     // 人物交互奖励
