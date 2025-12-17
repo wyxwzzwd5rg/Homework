@@ -680,12 +680,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0b3e511c78016d94fb230cec92c796ed, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  safeClosedSprite: {fileID: 6951757699362262529, guid: d6b93b89a8a1e6246a050682a36fec6c, type: 3}
+  safeOpenedSprite: {fileID: 21300000, guid: 054af3741fa85664daa09486366a87f9, type: 3}
   safePassword: 5689
-  autoCloseOnSuccess: 1
-  disableColliderAfterUnlock: 1
+  autoCloseUIPanel: 1
   rewardItemId: item_solvent
   rewardSprite: {fileID: 21300000, guid: 7acbcc8251107e147844573b2ca7aac3, type: 3}
-  placeholderColor: {r: 1, g: 1, b: 1, a: 1}
+  rewardPropOffset: {x: 0, y: 1, z: 0}
 --- !u!61 &168558189
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -2270,12 +2271,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0b3e511c78016d94fb230cec92c796ed, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  safeClosedSprite: {fileID: 6951757699362262529, guid: d6b93b89a8a1e6246a050682a36fec6c, type: 3}
+  safeOpenedSprite: {fileID: 21300000, guid: 054af3741fa85664daa09486366a87f9, type: 3}
   safePassword: 1234
-  autoCloseOnSuccess: 1
-  disableColliderAfterUnlock: 1
+  autoCloseUIPanel: 1
   rewardItemId: item_mirror
   rewardSprite: {fileID: 21300000, guid: 1baf56f3c0d517547ae0ebade3a9dcd2, type: 3}
-  placeholderColor: {r: 1, g: 1, b: 1, a: 1}
+  rewardPropOffset: {x: 0, y: 0, z: 0}
 --- !u!61 &459237753
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -2918,7 +2920,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -553.95996, y: -493}
+  m_AnchoredPosition: {x: -553.9601, y: -493}
   m_SizeDelta: {x: -1764.79, y: -1045.71}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &606351385
@@ -5918,12 +5920,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0b3e511c78016d94fb230cec92c796ed, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  safeClosedSprite: {fileID: 0}
+  safeOpenedSprite: {fileID: 0}
   safePassword: 
-  autoCloseOnSuccess: 1
-  disableColliderAfterUnlock: 1
+  autoCloseUIPanel: 1
   rewardItemId: item_reward
   rewardSprite: {fileID: 0}
-  placeholderColor: {r: 0.7, g: 0.9, b: 0.7, a: 1}
+  rewardPropOffset: {x: 0, y: 1, z: 0}
 --- !u!114 &1190047609
 MonoBehaviour:
   m_ObjectHideFlags: 0
