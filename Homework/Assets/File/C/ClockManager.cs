@@ -5,10 +5,11 @@ public class ClockManager : MonoBehaviour
     public static ClockManager Instance;
     public Transform hourHand; // 拖入场景中的时针
     public Transform minuteHand; // 拖入场景中的分针
+    public Transform customPivot;
     public GameObject cuckooBird; // 拖入布谷鸟对象
     public GameObject secretCompartment; // 拖入暗格对象
-    public float correctHourAngle = 270f; // 9点对应的角度（从12点顺时针转270度）
-    public float correctMinuteAngle = 90f; // 15分对应的角度（从12点顺时针转90度）
+    public float correctHourAngle = -150f; // 9点对应的角度（从12点顺时针转270度）
+    public float correctMinuteAngle = -30f; // 15分对应的角度（从12点顺时针转90度）
     private bool isSolved = false;
 
     void Awake()
