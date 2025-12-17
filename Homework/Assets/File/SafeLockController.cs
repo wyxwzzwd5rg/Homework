@@ -28,6 +28,16 @@ public class SafeLockController : MonoBehaviour
 
     private void Start()
     {
+        // 如果道具已经拿过（比如读档、重进场景），直接视为已解锁，并可选关闭碰撞体
+        if (GameData.IsItemCollected(rewardItemId))
+        {
+            _isUnlocked = true;
+            if (disableColliderAfterUnlock)
+            {
+                DisableColliders();
+            }
+        }
+
         if (lockPanel != null) lockPanel.SetActive(false);
     }
 
@@ -38,27 +48,36 @@ public class SafeLockController : MonoBehaviour
 
     public void OpenLockUI()
     {
-        if (_isUnlocked) return;
+        // 已经解锁过（本局内）或道具已被收集（全局）时，不再打开
+        if (_isUnlocked || GameData.IsItemCollected(rewardItemId))
+        {
+            _isUnlocked = true;
+            if (disableColliderAfterUnlock)
+            {
+                DisableColliders();
+            }
+            return;
+        }
         if (lockPanel != null) lockPanel.SetActive(true);
         ResetInput();
     }
 
     public void AppendDigit(string digit)
     {
-        if (_isUnlocked) return;
+        if (_isUnlocked || GameData.IsItemCollected(rewardItemId)) return;
         _currentInput += digit;
         UpdateDisplay(_currentInput);
     }
 
     public void ClearInput()
     {
-        if (_isUnlocked) return;
+        if (_isUnlocked || GameData.IsItemCollected(rewardItemId)) return;
         ResetInput();
     }
 
     public void SubmitCode()
     {
-        if (_isUnlocked) return;
+        if (_isUnlocked || GameData.IsItemCollected(rewardItemId)) return;
         if (_currentInput == correctCode)
         {
             OnUnlockSuccess();
@@ -81,12 +100,7 @@ public class SafeLockController : MonoBehaviour
 
         if (disableColliderAfterUnlock)
         {
-            // 3D 或 2D 碰撞体都尝试禁用，避免再次被点击
-            Collider col3D = GetComponent<Collider>();
-            if (col3D != null) col3D.enabled = false;
-
-            Collider2D col2D = GetComponent<Collider2D>();
-            if (col2D != null) col2D.enabled = false;
+            DisableColliders();
         }
         UpdateDisplay("解锁");
     }
@@ -146,6 +160,16 @@ public class SafeLockController : MonoBehaviour
     {
         yield return new WaitForSeconds(delay);
         ResetInput();
+    }
+
+    // 统一关闭 3D/2D 碰撞体，防止再次点击
+    private void DisableColliders()
+    {
+        Collider col3D = GetComponent<Collider>();
+        if (col3D != null) col3D.enabled = false;
+
+        Collider2D col2D = GetComponent<Collider2D>();
+        if (col2D != null) col2D.enabled = false;
     }
 }
 
