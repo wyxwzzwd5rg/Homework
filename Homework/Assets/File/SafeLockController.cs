@@ -4,30 +4,31 @@ using UnityEngine.UI;
 
 public class SafeLockController : MonoBehaviour
 {
-    [Header("密码设置")]
-    public string correctCode = "1234";
+    [Header("【保险柜专属配置】")]
+    public string safePassword; // 自定义密码（如1234、1234-）
     public bool autoCloseOnSuccess = true;
     public bool disableColliderAfterUnlock = true;
 
-    [Header("奖励设置【关键：按实际Sprite名称填】")]
-    public string rewardItemId = "item_reward"; // 每个保险箱唯一ID
-    public Sprite rewardSprite;    // 直接拖入场景中的jingpian/rongjieji Sprite
+    [Header("奖励设置")]
+    public string rewardItemId = "item_reward"; // 唯一ID：safe1_lens/safe2_solvent
+    public Sprite rewardSprite;                // 拖入jingpian/rongjieji Sprite
     public Color placeholderColor = new Color(0.7f, 0.9f, 0.7f, 1f);
 
-    // 全局唯一UI引用（拖拽场景中的Placeholder_SafePanel）
+    // 全局UI引用（单例复用）
     public static GameObject GlobalLockPanel;
     public static Text GlobalDisplayText;
     private static SafeLockController _currentTargetSafe; // 当前交互的保险柜
     private string _currentInput = "";
+    private const int MaxInputLength = 4; // 输入上限：4位数字
 
     private void Awake()
     {
-        // 初始化全局UI（仅第一次加载时执行）
+        // 初始化全局UI（仅第一次加载时绑定）
         if (GlobalLockPanel == null)
         {
             GlobalLockPanel = GameObject.Find("Placeholder_SafePanel");
             GlobalDisplayText = GlobalLockPanel.GetComponentInChildren<Text>(true);
-            BindUIButtons(); // 绑定按钮逻辑
+            BindUIButtons(); // 绑定按钮逻辑（仅执行一次）
         }
         GlobalLockPanel?.SetActive(false); // 默认关闭UI
     }
@@ -55,64 +56,75 @@ public class SafeLockController : MonoBehaviour
             return;
         }
         _currentTargetSafe = this;
+        _currentInput = ""; // 打开时强制清空输入
         GlobalLockPanel.SetActive(true);
-        ResetInput();
+        UpdateDisplay(""); // 清空显示
     }
 
-    // 绑定UI按钮（数字/清空/提交）
+    // 绑定UI按钮（修复重复绑定+输入上限）
     private void BindUIButtons()
     {
+        // 先清空所有按钮原有事件（防止重复绑定）
         foreach (var btn in GlobalLockPanel.GetComponentsInChildren<Button>(true))
         {
-            if (btn.name.StartsWith("Btn")) // 数字按钮：Btn1/Btn2/Btn3/Btn4
+            btn.onClick.RemoveAllListeners();
+        }
+
+        // 重新绑定按钮逻辑
+        foreach (var btn in GlobalLockPanel.GetComponentsInChildren<Button>(true))
+        {
+            // 数字按钮：Button1/Button2/Button3/Button4（支持任意数字）
+            if (btn.name.StartsWith("Button"))
             {
-                string digit = btn.name.Replace("Btn", "");
-                btn.onClick.AddListener(() => AppendDigit(digit));
+                string digit = btn.name.Replace("Button", "");
+                btn.onClick.AddListener(() => AppendSingleDigit(digit));
             }
-            else if (btn.name == "BtnClear") // 清空按钮
+            // 退出按钮（原Clear）
+            else if (btn.name == "BtnClear")
             {
-                btn.onClick.AddListener(ClearInput);
+                btn.onClick.AddListener(() => GlobalLockPanel.SetActive(false));
             }
-            else if (btn.name == "BtnSubmit") // 提交按钮
+            // 提交按钮（OK）
+            else if (btn.name == "BtnSubmit")
             {
-                btn.onClick.AddListener(SubmitCode);
+                btn.onClick.AddListener(SubmitPassword);
             }
         }
     }
 
-    // 输入数字（全局静态方法）
-    public static void AppendDigit(string digit)
-    {
-        if (_currentTargetSafe == null || GameData.IsItemCollected(_currentTargetSafe.rewardItemId)) return;
-        _currentTargetSafe._currentInput += digit;
-        UpdateDisplay(_currentTargetSafe._currentInput);
-    }
-
-    // 清空输入（全局静态方法）
-    public static void ClearInput()
-    {
-        if (_currentTargetSafe == null) return;
-        _currentTargetSafe._currentInput = "";
-        UpdateDisplay("");
-    }
-
-    // 提交密码（全局静态方法）
-    public static void SubmitCode()
+    // 核心：单次点击仅加1位数字 + 限制最多4位
+    private void AppendSingleDigit(string digit)
     {
         if (_currentTargetSafe == null || GameData.IsItemCollected(_currentTargetSafe.rewardItemId)) return;
 
-        if (_currentTargetSafe._currentInput == _currentTargetSafe.correctCode)
+        // 输入长度未到4位时才允许输入
+        if (_currentTargetSafe._currentInput.Length < MaxInputLength)
+        {
+            _currentTargetSafe._currentInput += digit; // 仅追加一次
+            UpdateDisplay(_currentTargetSafe._currentInput);
+        }
+        // 超过4位时无反应（可加提示，可选）
+        // else { UpdateDisplay("最多4位"); }
+    }
+
+    // 提交密码逻辑
+    private void SubmitPassword()
+    {
+        if (_currentTargetSafe == null || GameData.IsItemCollected(_currentTargetSafe.rewardItemId)) return;
+
+        // 对比自定义密码
+        if (_currentTargetSafe._currentInput == _currentTargetSafe.safePassword)
         {
             _currentTargetSafe.OnUnlockSuccess();
         }
         else
         {
             UpdateDisplay("错误");
-            _currentTargetSafe.StartCoroutine(_currentTargetSafe.ResetAfterDelay(0.8f));
+            _currentTargetSafe.StartCoroutine(_currentTargetSafe.ResetInputAfterDelay(0.8f));
         }
     }
 
-    // 解锁成功：发放对应奖励
+    // 解锁成功：发放奖励
     private void OnUnlockSuccess()
     {
         GrantReward();
@@ -121,15 +133,13 @@ public class SafeLockController : MonoBehaviour
         UpdateDisplay("解锁");
     }
 
-    // 发放奖励【核心修正：直接使用配置的Sprite】
+    // 发放奖励
     private void GrantReward()
     {
-        // 优先使用配置的Sprite（jingpian/rongjieji）
         Sprite spriteToUse = rewardSprite;
-
-        // 兜底：无Sprite时生成占位图
         if (spriteToUse == null)
         {
+            // 生成占位图（兜底）
             Texture2D tex = new Texture2D(64, 64);
             Color[] colors = new Color[64 * 64];
             for (int i = 0; i < colors.Length; i++) colors[i] = placeholderColor;
@@ -153,9 +163,10 @@ public class SafeLockController : MonoBehaviour
         }
     }
 
-    // 重置输入
-    private void ResetInput()
+    // 延迟清空输入（密码错误时）
+    private IEnumerator ResetInputAfterDelay(float delay)
     {
+        yield return new WaitForSeconds(delay);
         _currentInput = "";
         UpdateDisplay("");
     }
@@ -166,18 +177,12 @@ public class SafeLockController : MonoBehaviour
         if (GlobalDisplayText != null) GlobalDisplayText.text = content;
     }
 
-    // 错误后延迟重置
-    private IEnumerator ResetAfterDelay(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        ResetInput();
-    }
-
     // 禁用碰撞体（领奖后无法点击）
     private void DisableColliders()
     {
         Collider col3D = GetComponent<Collider>();
         if (col3D != null) col3D.enabled = false;
+
         Collider2D col2D = GetComponent<Collider2D>();
         if (col2D != null) col2D.enabled = false;
     }
