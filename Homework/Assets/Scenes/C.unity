@@ -217,9 +217,9 @@ GameObject:
   m_Component:
   - component: {fileID: 174726645}
   - component: {fileID: 174726644}
-  - component: {fileID: 174726646}
   - component: {fileID: 174726643}
   - component: {fileID: 174726642}
+  - component: {fileID: 174726646}
   m_Layer: 0
   m_Name: SanCanvas
   m_TagString: Untagged
@@ -741,7 +741,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -553.95996, y: -493}
+  m_AnchoredPosition: {x: -553.96, y: -493}
   m_SizeDelta: {x: -1764.79, y: -1045.71}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &274222043
@@ -1805,9 +1805,9 @@ GameObject:
   m_Component:
   - component: {fileID: 578342257}
   - component: {fileID: 578342260}
-  - component: {fileID: 578342261}
   - component: {fileID: 578342259}
   - component: {fileID: 578342258}
+  - component: {fileID: 578342261}
   m_Layer: 0
   m_Name: Canvas
   m_TagString: Untagged
@@ -2056,9 +2056,9 @@ GameObject:
   m_Component:
   - component: {fileID: 673852241}
   - component: {fileID: 673852240}
-  - component: {fileID: 673852242}
   - component: {fileID: 673852239}
   - component: {fileID: 673852238}
+  - component: {fileID: 673852242}
   m_Layer: 0
   m_Name: 'DrawersCanvas '
   m_TagString: Untagged
@@ -4040,10 +4040,10 @@ GameObject:
   m_Component:
   - component: {fileID: 1230816062}
   - component: {fileID: 1230816065}
-  - component: {fileID: 1230816067}
   - component: {fileID: 1230816064}
   - component: {fileID: 1230816066}
   - component: {fileID: 1230816063}
+  - component: {fileID: 1230816067}
   m_Layer: 0
   m_Name: 'ClockCanvas '
   m_TagString: Untagged
@@ -6281,7 +6281,7 @@ MonoBehaviour:
   Camera2: {fileID: 2025796312}
   Camera3: {fileID: 1555919545}
   Camera4: {fileID: 1424909887}
-  BackpackCanvas: {fileID: 0}
+  BackpackCanvas: {fileID: 1693078774}
   allCamerasForBackpack:
   - {fileID: 464090433}
   - {fileID: 2025796312}
@@ -6522,9 +6522,9 @@ GameObject:
   m_Component:
   - component: {fileID: 1693078770}
   - component: {fileID: 1693078774}
-  - component: {fileID: 1693078773}
   - component: {fileID: 1693078772}
   - component: {fileID: 1693078771}
+  - component: {fileID: 1693078775}
   m_Layer: 0
   m_Name: Canvas (1)
   m_TagString: Untagged
@@ -6594,19 +6594,6 @@ MonoBehaviour:
   m_DefaultSpriteDPI: 96
   m_DynamicPixelsPerUnit: 1
   m_PresetInfoIsWorld: 0
---- !u!114 &1693078773
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1693078769}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9287f4e3effb2cf4bad067fa4af4c5db, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  targetAspect: 1.5802469
 --- !u!223 &1693078774
 Canvas:
   m_ObjectHideFlags: 0
@@ -6630,6 +6617,19 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 1000
   m_TargetDisplay: 0
+--- !u!114 &1693078775
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1693078769}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9287f4e3effb2cf4bad067fa4af4c5db, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetAspect: 1.5802469
 --- !u!1 &1795749768
 GameObject:
   m_ObjectHideFlags: 0
