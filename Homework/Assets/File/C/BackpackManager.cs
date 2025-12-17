@@ -5,10 +5,21 @@ using System.Collections.Generic;
 // 背包管理器：单例模式（整个游戏只有一个实例，跨场景不销毁）
 public class BackpackManager : MonoBehaviour
 {
-
-    // BackpackManager.cs 中新增：
+    [Header("当前选中状态")]
     public int selectedSlotIndex = -1; // 当前选中的背包槽索引（-1表示未选中）
     public Sprite selectedItem; // 当前选中的物品Sprite
+
+    [Header("场景A动态道具占位与命名")]
+    public string mirrorPieceName = "jingpian";       // 镜片
+    public string knifeName = "xiaodao";               // 小刀
+    public string magnifierName = "fangdajing";        // 放大镜
+    public string solventName = "rongjiej";            // 溶解剂
+    public string umbrellaName = "yusan";              // 雨伞
+    public Sprite mirrorPieceSprite;   // 保险柜1奖励
+    public Sprite magnifierSprite;     // 人物交互奖励
+    public Sprite solventSprite;       // 保险柜2奖励
+    public Sprite umbrellaSprite;      // 溶解后掉落
+    public Color placeholderColor = new Color(0.8f, 0.8f, 0.8f, 1f);
 
     // 单例实例（全局唯一，其他脚本可通过 BackpackManager.Instance 访问）
     public static BackpackManager Instance;
@@ -133,18 +144,77 @@ public class BackpackManager : MonoBehaviour
             // 案例1：螺丝刀与布谷鸟交互
             case "luosidao_CuckooBird":
                 // 1. 移除背包中的螺丝刀（保持原有）
-                collectedItems.RemoveAt(selectedSlotIndex);
-                UpdateBackpackUI(); // 更新背包UI（让螺丝刀从背包消失）
-                selectedItem = null; // 清空选中状态
-                                     // 2. 调用布谷鸟的ShowSpring方法，激活弹簧显示（替换原有的Instantiate）
+                ConsumeSelectedItem();
+                // 2. 调用布谷鸟的ShowSpring方法，激活弹簧显示（替换原有的Instantiate）
                 interactObj.ShowSpring();
                 Debug.Log("使用螺丝刀，布谷鸟弹出弹簧！");
                 break;
+            // 镜片与藤蔓交互：清除藤蔓，允许打开抽屉
+            case var key when key == $"{mirrorPieceName}_Vine":
+                ConsumeSelectedItem();
+                interactObj.InvokeSuccessEvent();
+                Debug.Log("镜片切开藤蔓，抽屉可用");
+                break;
+            // 小刀与人物交互：获得放大镜
+            case var key when key == $"{knifeName}_Person":
+                ConsumeSelectedItem();
+                CollectRuntimeItem(GetOrCreateSprite(magnifierSprite, magnifierName, new Color(0.9f, 0.9f, 0.6f, 1f)), "item_magnifier");
+                interactObj.InvokeSuccessEvent();
+                Debug.Log("使用小刀完成交互，获得放大镜");
+                break;
+            // 放大镜与油画交互：打开放大UI
+            case var key when key == $"{magnifierName}_PaintingZoom":
+                // 放大镜不消耗，保持选中
+                interactObj.InvokeSuccessEvent();
+                Debug.Log("使用放大镜查看油画，打开放大UI");
+                break;
+            // 溶解剂与油画交互：溶解并掉落雨伞
+            case var key when key == $"{solventName}_PaintingBase":
+                ConsumeSelectedItem();
+                CollectRuntimeItem(GetOrCreateSprite(umbrellaSprite, umbrellaName, new Color(0.6f, 0.8f, 1f, 1f)), "item_umbrella");
+                interactObj.InvokeSuccessEvent();
+                Debug.Log("使用溶解剂，油画溶解，获得雨伞");
+                break;
                 // 后续新增物品交互时，直接在这里添加case即可
-                // 案例2：钥匙与门交互
-                // case "Key_Door":
-                //     // 钥匙开门逻辑...
-                //     break;
         }
+    }
+
+    // ---------- 工具方法 ----------
+    private void ConsumeSelectedItem()
+    {
+        if (selectedSlotIndex >= 0 && selectedSlotIndex < collectedItems.Count)
+        {
+            collectedItems.RemoveAt(selectedSlotIndex);
+            UpdateBackpackUI();
+        }
+        selectedSlotIndex = -1;
+        selectedItem = null;
+    }
+
+    private void CollectRuntimeItem(Sprite sprite, string itemId)
+    {
+        if (sprite == null)
+        {
+            Debug.LogError($"CollectRuntimeItem失败：sprite为空，itemId={itemId}");
+            return;
+        }
+        CollectItem(sprite);
+        GameData.AddCollectedItem(itemId);
+    }
+
+    private Sprite GetOrCreateSprite(Sprite input, string desiredName, Color color)
+    {
+        if (input != null) return input;
+
+        // 生成一个临时占位Sprite，避免素材缺失阻塞流程
+        Texture2D tex = new Texture2D(64, 64);
+        Color[] colors = new Color[64 * 64];
+        for (int i = 0; i < colors.Length; i++) colors[i] = color.a > 0 ? color : placeholderColor;
+        tex.SetPixels(colors);
+        tex.Apply();
+        Sprite generated = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f), 100f);
+        generated.name = desiredName;
+        Debug.LogWarning($"未找到素材，自动生成占位Sprite：{desiredName}");
+        return generated;
     }
 }
