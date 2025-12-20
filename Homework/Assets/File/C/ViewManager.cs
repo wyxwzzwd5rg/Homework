@@ -9,6 +9,7 @@ public class ViewManager : MonoBehaviour
     public Canvas drawersCanvas;   // 柜子特写的 Canvas (DrawersCanvas)
     public Canvas clockCanvas;     // 时钟特写的 Canvas (ClockCanvas)
     public Canvas puzzleCanvas;
+    public Canvas clockV1Canvas;
     // void Start()
     // {
     //     // 临时测试代码，在游戏开始5秒后执行
@@ -49,6 +50,7 @@ public class ViewManager : MonoBehaviour
         drawersCanvas.gameObject.SetActive(true);
         clockCanvas.gameObject.SetActive(false);
         puzzleCanvas.gameObject.SetActive(false);
+        clockV1Canvas.gameObject.SetActive(false);
         Debug.Log("进入柜子特写：DrawersCanvas 已激活，ClockCanvas/PuzzleCanvas 已禁用");
     }
 
@@ -59,6 +61,7 @@ public class ViewManager : MonoBehaviour
         clockCanvas.gameObject.SetActive(true);
         drawersCanvas.gameObject.SetActive(false);
         puzzleCanvas.gameObject.SetActive(false);
+        clockV1Canvas.gameObject.SetActive(false);
         Debug.Log("进入时钟特写：ClockCanvas 已激活，DrawersCanvas/PuzzleCanvas 已禁用");
     }
     // 进入华容道特写视角：激活 PuzzleCanvas，禁用 DrawersCanvas/ClockCanvas
@@ -68,13 +71,25 @@ public class ViewManager : MonoBehaviour
         puzzleCanvas.gameObject.SetActive(true);
         clockCanvas.gameObject.SetActive(false);
         drawersCanvas.gameObject.SetActive(false);
+        clockV1Canvas.gameObject.SetActive(false);
         Debug.Log("进入华容道特写：PuzzleCanvas 已激活，DrawersCanvas/ClockCanvas已禁用");
+    }
+    // 进入V1特写视角：激活 PuzzleCanvas，禁用 DrawersCanvas/ClockCanvas
+    public void EnterClockV1View()
+    {
+        Debug.LogError("EnterPuzzleView被调用了！");
+        clockV1Canvas.gameObject.SetActive(true);
+        clockCanvas.gameObject.SetActive(false);
+        drawersCanvas.gameObject.SetActive(false);
+        puzzleCanvas.gameObject.SetActive(false);
+        Debug.Log("进入Video1特写：clockV1Canvas 已激活，DrawersCanvas/ClockCanvas已禁用");
     }
     // 退出特写视角：禁用所有特写 Canvas
     public void ExitCloseUpView()
     {
         drawersCanvas.gameObject.SetActive(false);
         clockCanvas.gameObject.SetActive(false);
+        clockV1Canvas.gameObject.SetActive(false);
         puzzleCanvas.gameObject.SetActive(false);
         Debug.Log("退出特写视角：所有 Canvas 已禁用");
     }

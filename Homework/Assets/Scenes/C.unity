@@ -2144,6 +2144,7 @@ MonoBehaviour:
   drawersCanvas: {fileID: 673852240}
   clockCanvas: {fileID: 1230816065}
   puzzleCanvas: {fileID: 511225581}
+  clockV1Canvas: {fileID: 0}
 --- !u!4 &506440438
 Transform:
   m_ObjectHideFlags: 0
@@ -3074,7 +3075,7 @@ MonoBehaviour:
   m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 1920, y: 1215}
+  m_ReferenceResolution: {x: 1920, y: 1214}
   m_ScreenMatchMode: 0
   m_MatchWidthOrHeight: 0
   m_PhysicalUnit: 3
@@ -5432,10 +5433,12 @@ MonoBehaviour:
   hourHand: {fileID: 1013398149}
   minuteHand: {fileID: 629747023}
   customPivot: {fileID: 933826912}
-  cuckooBird: {fileID: 1605817975}
-  secretCompartment: {fileID: 1497727526}
+  videoCanvas: {fileID: 0}
+  mediaPlayer: {fileID: 0}
   correctHourAngle: 210
   correctMinuteAngle: 330
+  clockV1Camera: {fileID: 0}
+  originalClockCanvas: {fileID: 1230816061}
 --- !u!114 &1230816067
 MonoBehaviour:
   m_ObjectHideFlags: 0
