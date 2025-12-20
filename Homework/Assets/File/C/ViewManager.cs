@@ -8,7 +8,7 @@ public class ViewManager : MonoBehaviour
     // 拖入两个特写视角的 Canvas
     public Canvas drawersCanvas;   // 柜子特写的 Canvas (DrawersCanvas)
     public Canvas clockCanvas;     // 时钟特写的 Canvas (ClockCanvas)
-
+    public Canvas puzzleCanvas;
     // void Start()
     // {
     //     // 临时测试代码，在游戏开始5秒后执行
@@ -48,7 +48,8 @@ public class ViewManager : MonoBehaviour
         Debug.LogError("EnterCabinetView被调用了！");
         drawersCanvas.gameObject.SetActive(true);
         clockCanvas.gameObject.SetActive(false);
-        Debug.Log("进入柜子特写：DrawersCanvas 已激活，ClockCanvas 已禁用");
+        puzzleCanvas.gameObject.SetActive(false);
+        Debug.Log("进入柜子特写：DrawersCanvas 已激活，ClockCanvas/PuzzleCanvas 已禁用");
     }
 
     // 进入时钟特写视角：激活 ClockCanvas，禁用 DrawersCanvas
@@ -57,14 +58,24 @@ public class ViewManager : MonoBehaviour
         Debug.LogError("EnterClockView被调用了！");
         clockCanvas.gameObject.SetActive(true);
         drawersCanvas.gameObject.SetActive(false);
-        Debug.Log("进入时钟特写：ClockCanvas 已激活，DrawersCanvas 已禁用");
+        puzzleCanvas.gameObject.SetActive(false);
+        Debug.Log("进入时钟特写：ClockCanvas 已激活，DrawersCanvas/PuzzleCanvas 已禁用");
     }
-
+    // 进入华容道特写视角：激活 PuzzleCanvas，禁用 DrawersCanvas/ClockCanvas
+    public void EnterPuzzleView()
+    {
+        Debug.LogError("EnterPuzzleView被调用了！");
+        puzzleCanvas.gameObject.SetActive(true);
+        clockCanvas.gameObject.SetActive(false);
+        drawersCanvas.gameObject.SetActive(false);
+        Debug.Log("进入华容道特写：PuzzleCanvas 已激活，DrawersCanvas/ClockCanvas已禁用");
+    }
     // 退出特写视角：禁用所有特写 Canvas
     public void ExitCloseUpView()
     {
         drawersCanvas.gameObject.SetActive(false);
         clockCanvas.gameObject.SetActive(false);
+        puzzleCanvas.gameObject.SetActive(false);
         Debug.Log("退出特写视角：所有 Canvas 已禁用");
     }
 }
