@@ -3467,8 +3467,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 3.92, y: -0.2}
-  m_SizeDelta: {x: 1924.99, y: 1217.2}
+  m_AnchoredPosition: {x: 6, y: 158}
+  m_SizeDelta: {x: 1924.99, y: 1216.8}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!328 &734757944
 VideoPlayer:
@@ -3478,11 +3478,11 @@ VideoPlayer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 734757942}
   m_Enabled: 1
-  m_VideoClip: {fileID: 32900000, guid: 92390ceaa8417fb4d897099a35ca3425, type: 3}
+  m_VideoClip: {fileID: 32900000, guid: 192e072de6c2dbe4c8412101949c5e8b, type: 3}
   m_TargetCameraAlpha: 1
   m_TargetCamera3DLayout: 0
   m_TargetCamera: {fileID: 0}
-  m_TargetTexture: {fileID: 8400000, guid: db56d87640cee414d99e77bea0177707, type: 2}
+  m_TargetTexture: {fileID: 8400000, guid: 56306706a2414b94f9f8b7d399c01969, type: 2}
   m_TimeReference: 0
   m_TargetMaterialRenderer: {fileID: 0}
   m_TargetMaterialProperty: <noninit>
@@ -3492,12 +3492,14 @@ VideoPlayer:
   m_TimeUpdateMode: 2
   m_PlaybackSpeed: 1
   m_AudioOutputMode: 2
-  m_TargetAudioSources: []
-  m_DirectAudioVolumes: []
+  m_TargetAudioSources:
+  - {fileID: 0}
+  m_DirectAudioVolumes:
+  - 1
   m_Url: 
-  m_EnabledAudioTracks: 
-  m_DirectAudioMutes: 
-  m_ControlledAudioTrackCount: 0
+  m_EnabledAudioTracks: 01
+  m_DirectAudioMutes: 00
+  m_ControlledAudioTrackCount: 1
   m_PlayOnAwake: 0
   m_SkipOnDrop: 1
   m_Looping: 0
@@ -3524,7 +3526,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Texture: {fileID: 8400000, guid: db56d87640cee414d99e77bea0177707, type: 2}
+  m_Texture: {fileID: 8400000, guid: 56306706a2414b94f9f8b7d399c01969, type: 2}
   m_UVRect:
     serializedVersion: 2
     x: 0
@@ -4009,7 +4011,7 @@ Canvas:
   serializedVersion: 3
   m_RenderMode: 1
   m_Camera: {fileID: 1715817399}
-  m_PlaneDistance: 100
+  m_PlaneDistance: 1
   m_PixelPerfect: 0
   m_ReceivesEvents: 1
   m_OverrideSorting: 0
@@ -8331,6 +8333,7 @@ MonoBehaviour:
   Camera2: {fileID: 2025796312}
   Camera3: {fileID: 1555919545}
   Camera4: {fileID: 1424909887}
+  UiCanvas: {fileID: 578342260}
   BackpackCanvas: {fileID: 1693078774}
   allCamerasForBackpack:
   - {fileID: 464090433}
@@ -8341,11 +8344,9 @@ MonoBehaviour:
   - {fileID: 2064431963}
   - {fileID: 675309497}
   - {fileID: 34820898}
+  - {fileID: 1715817399}
   BtnLeft: {fileID: 698198649}
   BtnRight: {fileID: 2064810891}
-  UiCanvas: {fileID: 578342260}
-  Offset: 10
-  ButtonSize: {x: 1, y: 1}
 --- !u!4 &1611200164
 Transform:
   m_ObjectHideFlags: 0
@@ -8709,7 +8710,7 @@ Camera:
   m_GameObject: {fileID: 1715817398}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 2
+  m_ClearFlags: 3
   m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2

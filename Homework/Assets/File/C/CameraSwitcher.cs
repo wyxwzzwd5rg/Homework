@@ -3,120 +3,177 @@ using UnityEngine.UI;
 
 public class CameraAndUISwitcher : MonoBehaviour
 {
-    // 保留你原有1-4号摄像机的变量（不修改）
+    // 1-4号默认相机（原有配置）
     public Camera Camera1;
     public Camera Camera2;
     public Camera Camera3;
     public Camera Camera4;
-    private int currentCamera = 1;
 
-    // 新增：背包Canvas引用（拖入你的背包Canvas）
-    public Canvas BackpackCanvas;
-    // 新增：存储所有需要关联背包的摄像机（包括1-4号+后续新增）
+    // UI Canvas配置（原有）
+    public Canvas UiCanvas;          // 场景主UI画布
+    public Canvas BackpackCanvas;    // 背包画布
+
+    // 背包关联的所有相机（需包含Video1Camera）
     public Camera[] allCamerasForBackpack;
 
-    [Header("UI按钮")]
+    // 按钮引用（原有）
     public Button BtnLeft;
     public Button BtnRight;
 
-    [Header("UI画布")]
-    public Canvas UiCanvas;
-
-    [Header("布局参数")]
-    public int Offset = 10;
-    public Vector2 ButtonSize = new Vector2(1, 1);
+    // 当前激活的相机编号
+    private int currentCamIndex = 1;
 
     void Start()
     {
-        // 新增：游戏启动时强制激活Camera1，禁用其他摄像机
-        Camera1.gameObject.SetActive(true);
-        Camera2.gameObject.SetActive(false);
-        Camera3.gameObject.SetActive(false);
-        Camera4.gameObject.SetActive(false);
-
-        // 新增：将背包Canvas和场景UI Canvas绑定到Camera1
-        if (UiCanvas != null)
+        // 初始化按钮监听（原有逻辑）
+        if (BtnLeft != null)
         {
-            UiCanvas.worldCamera = Camera1;
+            BtnLeft.onClick.AddListener(OnBtnLeftClick);
         }
-        if (BackpackCanvas != null)
+        if (BtnRight != null)
         {
-            BackpackCanvas.renderMode = RenderMode.ScreenSpaceCamera;
-            BackpackCanvas.worldCamera = Camera1;
-            BackpackCanvas.planeDistance = 1; // 确保UI渲染距离
+            BtnRight.onClick.AddListener(OnBtnRightClick);
         }
-        // 原有按钮绑定逻辑（完全保留）
-        BtnLeft.onClick.AddListener(SwitchLeft);
-        BtnRight.onClick.AddListener(SwitchRight);
 
-        // 新增：初始化时将背包关联到第一个激活的摄像机
-        if (BackpackCanvas != null && allCamerasForBackpack.Length > 0)
+        // 初始化激活1号相机
+        SwitchCamera(currentCamIndex);
+
+        // 确保背包Canvas默认激活
+        if (BackpackCanvas != null && !BackpackCanvas.gameObject.activeSelf)
         {
-            BackpackCanvas.worldCamera = GetActiveCamera();
             BackpackCanvas.gameObject.SetActive(true);
         }
     }
 
     void Update()
     {
-        // 新增：每一帧检测当前激活的摄像机，同步关联背包Canvas
+        // 实时同步背包Canvas到当前激活的相机
         Camera activeCam = GetActiveCamera();
         if (activeCam != null && BackpackCanvas != null)
         {
             BackpackCanvas.worldCamera = activeCam;
+            // 确保背包Canvas始终激活（防止被误关闭）
+            if (!BackpackCanvas.gameObject.activeSelf)
+            {
+                BackpackCanvas.gameObject.SetActive(true);
+            }
         }
     }
 
-    // 保留你原有1-4号摄像机切换逻辑（完全不修改）
-    void SwitchLeft()
+    // 左按钮点击逻辑（切换上一个相机）
+    void OnBtnLeftClick()
     {
-        currentCamera--;
-        if (currentCamera < 1) currentCamera = 4;
-        SwitchCamera(currentCamera);
+        currentCamIndex--;
+        if (currentCamIndex < 1)
+        {
+            currentCamIndex = 4; // 循环到最后一个默认相机
+        }
+        SwitchCamera(currentCamIndex);
     }
 
-    void SwitchRight()
+    // 右按钮点击逻辑（切换下一个相机）
+    void OnBtnRightClick()
     {
-        currentCamera++;
-        if (currentCamera > 4) currentCamera = 1;
-        SwitchCamera(currentCamera);
+        currentCamIndex++;
+        if (currentCamIndex > 4)
+        {
+            currentCamIndex = 1; // 循环到第一个默认相机
+        }
+        SwitchCamera(currentCamIndex);
     }
 
+    // 核心：切换相机并同步UI（补充Video1Camera适配）
     void SwitchCamera(int camNum)
     {
-        // 原有1-4号摄像机激活逻辑（完全保留）
-        Camera1.gameObject.SetActive(camNum == 1);
-        Camera2.gameObject.SetActive(camNum == 2);
-        Camera3.gameObject.SetActive(camNum == 3);
-        Camera4.gameObject.SetActive(camNum == 4);
+        // 1. 激活/关闭1-4号默认相机（原有逻辑）
+        if (Camera1 != null) Camera1.gameObject.SetActive(camNum == 1);
+        if (Camera2 != null) Camera2.gameObject.SetActive(camNum == 2);
+        if (Camera3 != null) Camera3.gameObject.SetActive(camNum == 3);
+        if (Camera4 != null) Camera4.gameObject.SetActive(camNum == 4);
 
-        // 原有UI画布关联逻辑（保留）
-        Camera currentActiveCam = camNum == 1 ? Camera1 : (camNum == 2 ? Camera2 : (camNum == 3 ? Camera3 : Camera4));
-        if (UiCanvas != null)
+        // 2. 同步1-4号相机的主UI Canvas（原有逻辑）
+        Camera currentActiveCam = null;
+        switch (camNum)
+        {
+            case 1: currentActiveCam = Camera1; break;
+            case 2: currentActiveCam = Camera2; break;
+            case 3: currentActiveCam = Camera3; break;
+            case 4: currentActiveCam = Camera4; break;
+        }
+        if (UiCanvas != null && currentActiveCam != null)
         {
             UiCanvas.worldCamera = currentActiveCam;
         }
+
+        // 3. 新增：处理非1-4号相机（如Video1Camera）的UI同步
+        Camera activeCam = GetActiveCamera();
+        if (activeCam != null && !IsInDefaultCameras(activeCam))
+        {
+            // 同步主UI到当前激活的非默认相机
+            if (UiCanvas != null)
+            {
+                UiCanvas.worldCamera = activeCam;
+            }
+            // 同步背包UI到当前激活的非默认相机
+            if (BackpackCanvas != null)
+            {
+                BackpackCanvas.worldCamera = activeCam;
+            }
+        }
     }
 
-    // 新增：获取当前场景中激活的摄像机（兼容1-4号+新增摄像机）
+    // 辅助：获取当前场景中激活的相机
     private Camera GetActiveCamera()
     {
-        // 先检查1-4号摄像机是否有激活的（按钮切换的情况）
-        if (Camera1.isActiveAndEnabled) return Camera1;
-        if (Camera2.isActiveAndEnabled) return Camera2;
-        if (Camera3.isActiveAndEnabled) return Camera3;
-        if (Camera4.isActiveAndEnabled) return Camera4;
+        // 先检查1-4号默认相机
+        if (Camera1 != null && Camera1.gameObject.activeSelf) return Camera1;
+        if (Camera2 != null && Camera2.gameObject.activeSelf) return Camera2;
+        if (Camera3 != null && Camera3.gameObject.activeSelf) return Camera3;
+        if (Camera4 != null && Camera4.gameObject.activeSelf) return Camera4;
 
-        // 若1-4号都未激活，检查新增的摄像机数组
-        foreach (Camera cam in allCamerasForBackpack)
+        // 再检查背包关联的其他相机（如Video1Camera）
+        if (allCamerasForBackpack != null)
         {
-            if (cam != null && cam.isActiveAndEnabled)
+            foreach (Camera cam in allCamerasForBackpack)
             {
-                return cam;
+                if (cam != null && cam.gameObject.activeSelf)
+                {
+                    return cam;
+                }
             }
         }
 
-        // 兜底：返回第一个可用的摄像机
-        return allCamerasForBackpack.Length > 0 ? allCamerasForBackpack[0] : null;
+        return null;
+    }
+
+    // 辅助：判断相机是否为1-4号默认相机
+    private bool IsInDefaultCameras(Camera cam)
+    {
+        return cam == Camera1 || cam == Camera2 || cam == Camera3 || cam == Camera4;
+    }
+
+    // 可选：外部调用切换相机的方法（比如时钟关卡切换到Video1Camera时调用）
+    public void SwitchToCustomCamera(Camera targetCam)
+    {
+        // 关闭所有默认相机
+        if (Camera1 != null) Camera1.gameObject.SetActive(false);
+        if (Camera2 != null) Camera2.gameObject.SetActive(false);
+        if (Camera3 != null) Camera3.gameObject.SetActive(false);
+        if (Camera4 != null) Camera4.gameObject.SetActive(false);
+
+        // 激活目标相机（如Video1Camera）
+        if (targetCam != null)
+        {
+            targetCam.gameObject.SetActive(true);
+            // 同步UI到目标相机
+            if (UiCanvas != null) UiCanvas.worldCamera = targetCam;
+            if (BackpackCanvas != null) BackpackCanvas.worldCamera = targetCam;
+        }
+    }
+
+    // 可选：恢复到默认相机（视频播放结束后调用）
+    public void RestoreToDefaultCamera(int defaultCamNum = 1)
+    {
+        SwitchCamera(defaultCamNum);
     }
 }
