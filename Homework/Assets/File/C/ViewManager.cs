@@ -51,7 +51,7 @@ public class ViewManager : MonoBehaviour
         clockCanvas.gameObject.SetActive(false);
         puzzleCanvas.gameObject.SetActive(false);
         clockV1Canvas.gameObject.SetActive(false);
-        Debug.Log("进入柜子特写：DrawersCanvas 已激活，ClockCanvas/PuzzleCanvas 已禁用");
+        Debug.Log("进入柜子特写：DrawersCanvas 已激活，其他已禁用");
     }
 
     // 进入时钟特写视角：激活 ClockCanvas，禁用 DrawersCanvas
@@ -62,7 +62,7 @@ public class ViewManager : MonoBehaviour
         drawersCanvas.gameObject.SetActive(false);
         puzzleCanvas.gameObject.SetActive(false);
         clockV1Canvas.gameObject.SetActive(false);
-        Debug.Log("进入时钟特写：ClockCanvas 已激活，DrawersCanvas/PuzzleCanvas 已禁用");
+        Debug.Log("进入时钟特写：ClockCanvas 已激活，其他已禁用");
     }
     // 进入华容道特写视角：激活 PuzzleCanvas，禁用 DrawersCanvas/ClockCanvas
     public void EnterPuzzleView()
@@ -72,17 +72,17 @@ public class ViewManager : MonoBehaviour
         clockCanvas.gameObject.SetActive(false);
         drawersCanvas.gameObject.SetActive(false);
         clockV1Canvas.gameObject.SetActive(false);
-        Debug.Log("进入华容道特写：PuzzleCanvas 已激活，DrawersCanvas/ClockCanvas已禁用");
+        Debug.Log("进入华容道特写：PuzzleCanvas 已激活，其他已禁用");
     }
     // 进入V1特写视角：激活 PuzzleCanvas，禁用 DrawersCanvas/ClockCanvas
     public void EnterClockV1View()
     {
-        Debug.LogError("EnterPuzzleView被调用了！");
+        Debug.LogError("Enterv1View被调用了！");
         clockV1Canvas.gameObject.SetActive(true);
         clockCanvas.gameObject.SetActive(false);
         drawersCanvas.gameObject.SetActive(false);
         puzzleCanvas.gameObject.SetActive(false);
-        Debug.Log("进入Video1特写：clockV1Canvas 已激活，DrawersCanvas/ClockCanvas已禁用");
+        Debug.Log("进入Video1特写：clockV1Canvas 已激活，其他已禁用");
     }
     // 退出特写视角：禁用所有特写 Canvas
     public void ExitCloseUpView()

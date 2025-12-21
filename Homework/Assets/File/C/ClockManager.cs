@@ -1,5 +1,6 @@
 using UnityEngine;
-using RenderHeads.Media.AVProVideo;
+using UnityEngine.Video; // 引入原生VideoPlayer命名空间（新增）
+
 public class ClockManager : MonoBehaviour
 {
     public static ClockManager Instance;
@@ -11,7 +12,7 @@ public class ClockManager : MonoBehaviour
     // 替换：删除原VideoPlayer变量，新增MediaPlayer变量
 
     public GameObject videoCanvas; // 拖入VideoCanvas
-    public MediaPlayer mediaPlayer; // 拖入VideoPlayerRawImage上的MediaPlayer组件
+    public VideoPlayer nativeVideoPlayer;  // 拖入VideoPlayerRawImage上的MediaPlayer组件
     public float correctHourAngle = 210f; // 9点对应的角度（从12点顺时针转270度）
     public float correctMinuteAngle = 330f; // 15分对应的角度（从12点顺时针转90度）
     private bool isSolved = false;
@@ -49,25 +50,27 @@ public class ClockManager : MonoBehaviour
     // 重写：适配MediaPlayer的播放方法
     private void PlayClockVideo()
     {
-        if (videoCanvas != null && mediaPlayer != null
+        // 校验所有必要对象是否配置（避免空引用错误）
+        if (videoCanvas != null && nativeVideoPlayer != null
             && clockV1Camera != null && originalClockCanvas != null)
         {
-            // 1. 激活ClockV1Camera，关闭原时钟相机（如ClockCamera）
+            // 1. 切换相机：激活Video1Camera，关闭原时钟相机
             clockV1Camera.gameObject.SetActive(true);
-            Camera originalCamera = originalClockCanvas.GetComponentInParent<Camera>(); // 原时钟对应的相机
+            Camera originalCamera = originalClockCanvas.GetComponentInParent<Camera>(); // 获取原时钟相机（如ClockCamera）
             if (originalCamera != null)
             {
                 originalCamera.gameObject.SetActive(false);
             }
 
-            // 2. 显示ClockV1Canvas，隐藏原时钟画布
+            // 2. 切换画布：显示Video1Canvas，隐藏原时钟画布
             videoCanvas.SetActive(true);
             originalClockCanvas.SetActive(false);
 
-            // 3. 播放视频
-            mediaPlayer.Play();
-            mediaPlayer.Events.AddListener(OnVideoEvent);
-            Debug.Log("已激活ClockV1Camera并播放视频");
+            // 3. 播放视频（原生VideoPlayer方法）
+            nativeVideoPlayer.Play();
+            // 监听视频播放结束事件（新增）
+            nativeVideoPlayer.loopPointReached += OnVideoFinished;
+            Debug.Log("已激活Video1Camera并播放原生视频");
         }
         else
         {
@@ -75,44 +78,42 @@ public class ClockManager : MonoBehaviour
         }
     }
 
-    // 新增：AVPro视频事件回调（处理播放结束）
-    private void OnVideoEvent(MediaPlayer mp, MediaPlayerEvent.EventType eventType, ErrorCode errorCode)
+    // 关键修改3：新增视频播放结束回调（原生VideoPlayer事件）
+    private void OnVideoFinished(VideoPlayer vp)
     {
-        if (eventType == MediaPlayerEvent.EventType.FinishedPlaying)
+        // 1. 恢复画布：隐藏Video1Canvas，显示原时钟画布
+        videoCanvas.SetActive(false);
+        originalClockCanvas.SetActive(true);
+
+        // 2. 恢复相机：关闭Video1Camera，激活原时钟相机
+        clockV1Camera.gameObject.SetActive(false);
+        Camera originalCamera = originalClockCanvas.GetComponentInParent<Camera>();
+        if (originalCamera != null)
         {
-            // 1. 隐藏ClockV1Canvas，恢复原时钟画布
-            videoCanvas.SetActive(false);
-            originalClockCanvas.SetActive(true);
-
-            // 2. 关闭ClockV1Camera，恢复原时钟相机
-            clockV1Camera.gameObject.SetActive(false);
-            Camera originalCamera = originalClockCanvas.GetComponentInParent<Camera>();
-            if (originalCamera != null)
-            {
-                originalCamera.gameObject.SetActive(true);
-            }
-
-            mp.Events.RemoveListener(OnVideoEvent);
-            Debug.Log("视频播放结束，恢复原时钟界面");
+            originalCamera.gameObject.SetActive(true);
         }
-    }
-    // 打开暗格（示例：向上移动暗格）
-    // void OpenSecretCompartment()
-    // {
-    //     secretCompartment.SetActive(false);
-    //     // LeanTween.moveY(secretCompartment, secretCompartment.transform.position.y + 50f, 1f); // 使用LeanTween实现平滑动画（需导入插件）
-    //     // 若无LeanTween，可直接设置位置：secretCompartment.transform.position += new Vector3(0, 50f, 0);
-    // }
 
-    // // 弹出布谷鸟（示例：向上移动布谷鸟）
-    // void ShowCuckooBird()
-    // {
-    //     Debug.Log("显示布谷鸟！");
-    //     // 找到布谷鸟的InteractableObject脚本，调用ShowCuckoo()
-    //     InteractableObject cuckoo = cuckooBird.GetComponent<InteractableObject>();
-    //     if (cuckoo != null)
-    //     {
-    //         cuckoo.ShowCuckoo(); // 只激活布谷鸟，弹簧仍隐藏
-    //     }
-    // }
+        // 3. 移除事件监听（避免重复调用）
+        nativeVideoPlayer.loopPointReached -= OnVideoFinished;
+        Debug.Log("视频播放结束，恢复原时钟界面");
+    }
 }
+// 打开暗格（示例：向上移动暗格）
+// void OpenSecretCompartment()
+// {
+//     secretCompartment.SetActive(false);
+//     // LeanTween.moveY(secretCompartment, secretCompartment.transform.position.y + 50f, 1f); // 使用LeanTween实现平滑动画（需导入插件）
+//     // 若无LeanTween，可直接设置位置：secretCompartment.transform.position += new Vector3(0, 50f, 0);
+// }
+
+// // 弹出布谷鸟（示例：向上移动布谷鸟）
+// void ShowCuckooBird()
+// {
+//     Debug.Log("显示布谷鸟！");
+//     // 找到布谷鸟的InteractableObject脚本，调用ShowCuckoo()
+//     InteractableObject cuckoo = cuckooBird.GetComponent<InteractableObject>();
+//     if (cuckoo != null)
+//     {
+//         cuckoo.ShowCuckoo(); // 只激活布谷鸟，弹簧仍隐藏
+//     }
+// }
