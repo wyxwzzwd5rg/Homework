@@ -7,7 +7,8 @@ public class BackpackManager : MonoBehaviour
 {
     [Header("当前选中状态")]
     public int selectedSlotIndex = -1; // 当前选中的背包槽索引（-1表示未选中）
-    public Sprite selectedItem; // 当前选中的物品Sprite
+    [System.NonSerialized] // 防止Unity序列化，避免Inspector报错
+    public Sprite selectedItem; // 当前选中的物品Sprite（运行时动态赋值，不需要在Inspector中设置）
 
     // 单例实例（全局唯一，其他脚本可通过 BackpackManager.Instance 访问）
     public static BackpackManager Instance;
@@ -36,6 +37,49 @@ public class BackpackManager : MonoBehaviour
         // 额外检查：确保物品槽在场景切换后仍有效
         UpdateBackpackUI();
     }
+    
+    void Start()
+    {
+        // 自动绑定背包槽位的点击事件（修复Target为空的问题）
+        AutoBindSlotButtons();
+    }
+    
+    // 自动绑定背包槽位的点击事件
+    private void AutoBindSlotButtons()
+    {
+        if (itemSlots == null || itemSlots.Count == 0)
+        {
+            Debug.LogWarning("[背包绑定] itemSlots列表为空，无法自动绑定");
+            return;
+        }
+        
+        int boundCount = 0;
+        for (int i = 0; i < itemSlots.Count; i++)
+        {
+            if (itemSlots[i] == null) continue;
+            
+            // 获取Button组件（可能在Image的父物体上）
+            Button btn = itemSlots[i].GetComponent<Button>();
+            if (btn == null)
+            {
+                // 如果Image本身没有Button，检查父物体
+                btn = itemSlots[i].transform.parent?.GetComponent<Button>();
+            }
+            
+            if (btn != null)
+            {
+                // 清空原有事件
+                btn.onClick.RemoveAllListeners();
+                // 绑定到OnSlotClicked，传入槽位索引
+                int slotIndex = i; // 捕获变量
+                btn.onClick.AddListener(() => OnSlotClicked(slotIndex));
+                boundCount++;
+                Debug.Log($"[背包绑定] ✓ 已绑定槽位{i}的Button到OnSlotClicked({i})");
+            }
+        }
+        
+        Debug.Log($"[背包绑定] 完成：共绑定{boundCount}个槽位");
+    }
 
     // 收集物品的方法（其他脚本调用此方法添加物品）
     public void CollectItem(Sprite itemSprite)
@@ -51,6 +95,9 @@ public class BackpackManager : MonoBehaviour
         collectedItems.Add(itemSprite);
         // 更新背包UI显示
         UpdateBackpackUI();
+        
+        // 不自动选中，需要用户手动在背包中点击槽位才能选中
+        Debug.Log($"[收集物品] 已收集物品：{itemSprite.name}，请在背包中点击槽位选中该物品");
     }
 
     // 更新背包UI：将收集的物品显示到物品槽中
@@ -132,15 +179,37 @@ public class BackpackManager : MonoBehaviour
         return collectedItems.Contains(itemSprite);
     }
 
-    // BackpackManager.cs 中新增：
-    // 你的原有代码（选中槽位、记录选中物品）
+    // 选中槽位、记录选中物品（原有逻辑）
     public void OnSlotClicked(int slotIndex)
     {
+        Debug.Log($"[背包选中] ========== OnSlotClicked 被调用 ==========");
+        Debug.Log($"[背包选中] 槽位索引：{slotIndex}");
+        Debug.Log($"[背包选中] 背包物品数量：{collectedItems.Count}");
+        Debug.Log($"[背包选中] 当前selectedItem：{(selectedItem != null ? selectedItem.name : "null")}");
+        
         // 1. 验证槽位索引是否有效
-        if (slotIndex < 0 || slotIndex >= collectedItems.Count)
+        if (slotIndex < 0)
         {
-            Debug.LogError($"无效槽位索引：{slotIndex}");
+            Debug.LogError($"[背包选中] ✗ 槽位索引不能为负数：{slotIndex}");
             selectedItem = null;
+            selectedSlotIndex = -1;
+            return;
+        }
+        
+        if (collectedItems.Count == 0)
+        {
+            Debug.LogError($"[背包选中] ✗ 背包为空，没有物品可选中");
+            selectedItem = null;
+            selectedSlotIndex = -1;
+            return;
+        }
+        
+        if (slotIndex >= collectedItems.Count)
+        {
+            Debug.LogError($"[背包选中] ✗ 槽位索引超出范围：{slotIndex}，背包物品数量：{collectedItems.Count}");
+            Debug.LogError($"[背包选中] 提示：槽位索引应该从0开始，最大为{collectedItems.Count - 1}");
+            selectedItem = null;
+            selectedSlotIndex = -1;
             return;
         }
 
@@ -148,37 +217,71 @@ public class BackpackManager : MonoBehaviour
         Sprite currentItem = collectedItems[slotIndex];
         if (currentItem == null)
         {
-            Debug.LogError($"槽位{slotIndex}无物品");
+            Debug.LogError($"[背包选中] ✗ 槽位{slotIndex}的物品为null");
             selectedItem = null;
+            selectedSlotIndex = -1;
             return;
         }
 
-        // 3. 赋值selectedItem
+        // 3. 赋值selectedItem（与原有逻辑一致）
         selectedItem = currentItem;
-        selectedSlotIndex = slotIndex; // 同时记录选中的槽位索引
-        Debug.LogError($"[背包选中] 选中物品：{selectedItem.name}，槽位索引：{slotIndex}");
-        Debug.LogError($"[背包选中] 提示：现在可以点击场景中的交互对象（如藤蔓）来使用这个物品");
+        selectedSlotIndex = slotIndex;
+        Debug.Log($"[背包选中] ✓ 选中物品：{selectedItem.name}，槽位索引：{slotIndex}");
+        Debug.Log($"[背包选中] ✓ selectedItem已设置，现在可以点击场景中的交互对象");
+    }
+    
+    // 测试方法：用于检查背包状态
+    [ContextMenu("测试：打印背包状态")]
+    public void TestPrintBackpackState()
+    {
+        Debug.Log($"[测试] 背包物品数量：{collectedItems.Count}");
+        Debug.Log($"[测试] 当前选中物品：{(selectedItem != null ? selectedItem.name : "null")}");
+        Debug.Log($"[测试] 当前选中槽位索引：{selectedSlotIndex}");
+        for (int i = 0; i < collectedItems.Count; i++)
+        {
+            Debug.Log($"[测试] 槽位{i}：{(collectedItems[i] != null ? collectedItems[i].name : "null")}");
+        }
     }
 
     // BackpackManager.cs 中新增：
     // 通用交互方法：物品与场景对象交互
     public void OnInteractWithObject(string objectTag, InteractableObject interactObj)
     {
-        // 检查是否有选中物品
+        Debug.Log($"[交互调试] ========== OnInteractWithObject 被调用 ==========");
+        Debug.Log($"[交互调试] objectTag={objectTag}");
+        Debug.Log($"[交互调试] selectedSlotIndex={selectedSlotIndex}");
+        
+        // 先检查是否有选中物品（在访问name之前）
         if (selectedItem == null)
         {
-            Debug.LogWarning($"[交互调试] 交互失败：未选中任何物品！请先在背包中点击物品槽位选中物品。对象Tag={objectTag}");
+            Debug.LogWarning($"[交互调试] ✗ 交互失败：未选中任何物品！");
+            Debug.LogWarning($"[交互调试] 提示：请先在背包中点击物品槽位选中物品，然后再点击场景中的交互对象");
+            Debug.LogWarning($"[交互调试] 当前背包物品数量：{collectedItems.Count}");
+            if (collectedItems.Count > 0)
+            {
+                Debug.LogWarning($"[交互调试] 背包中的物品：");
+                for (int i = 0; i < collectedItems.Count; i++)
+                {
+                    string itemName = collectedItems[i] != null ? collectedItems[i].name : "null";
+                    Debug.LogWarning($"[交互调试]   槽位{i}：{itemName}");
+                }
+            }
             return;
         }
 
-        Debug.Log($"[交互调试] 进入交互逻辑：选中物品={selectedItem.name}，交互对象Tag={objectTag}");
+        // 现在可以安全访问 selectedItem.name
+        string selectedItemName = selectedItem != null ? selectedItem.name : "null";
+        Debug.Log($"[交互调试] ========== 开始交互 ==========");
+        Debug.Log($"[交互调试] 选中物品：{selectedItemName}（Sprite名字）");
+        Debug.Log($"[交互调试] 交互对象Tag：{objectTag}");
+        Debug.Log($"[交互调试] 交互对象名：{interactObj.gameObject.name}");
 
         // 构建匹配键（物品名称 + 场景对象标签）
-        string matchKey = $"{selectedItem.name}_{objectTag}";
-        Debug.LogError($"[交互调试] 匹配键：{matchKey}");
+        string matchKey = $"{selectedItemName}_{objectTag}";
+        Debug.Log($"[交互调试] 匹配键：{matchKey}");
+        Debug.Log($"[交互调试] 期望匹配：jingpian_Vine（镜片+荆棘）或 rongjieji_PaintingBase（溶解剂+油画）");
 
         // 根据“物品名称 + 场景对象标签”匹配交互逻辑
-        // 注意：只保留原有场景的交互逻辑，新场景的交互通过InteractableObject的onInteractSuccess事件处理
         switch (matchKey)
         {
             // 案例1：螺丝刀与布谷鸟交互（原有逻辑，保持不变）
@@ -189,20 +292,53 @@ public class BackpackManager : MonoBehaviour
                 interactObj.ShowSpring();
                 Debug.Log("使用螺丝刀，布谷鸟弹出弹簧！");
                 break;
+            // 场景A：镜片与荆棘交互（明确匹配，确保交互成功）
+            case "jingpian_Vine":
+            case "jingpian_vine":
+            case "Jingpian_Vine":
+            case "Jingpian_vine":
+                Debug.Log($"[镜片+荆棘] ✓ 匹配成功！开始交互");
+                // 触发交互成功事件（荆棘会消失，抽屉会解锁）
+                interactObj.InvokeSuccessEvent();
+                // 消耗镜片
+                ConsumeSelectedItem();
+                Debug.Log($"[镜片+荆棘] ✓ 交互完成：荆棘已消失，抽屉已解锁");
+                break;
+            // 场景A：溶解剂与油画交互（明确匹配，确保交互成功）
+            case "rongjieji_PaintingBase":
+            case "rongjieji_paintingbase":
+            case "Rongjieji_PaintingBase":
+            case "Rongjieji_paintingbase":
+                Debug.Log($"[溶解剂+油画] ✓ 匹配成功！开始交互");
+                // 触发交互成功事件（油画会消失，伞会显示）
+                interactObj.InvokeSuccessEvent();
+                // 消耗溶解剂
+                ConsumeSelectedItem();
+                Debug.Log($"[溶解剂+油画] ✓ 交互完成：油画已消失，伞已显示");
+                break;
             // 默认：未匹配到任何交互，触发通用交互事件（让场景自己处理）
             default:
-                Debug.LogError($"[交互调试] 未找到匹配的交互逻辑！物品名={selectedItem.name}，对象Tag={objectTag}，匹配键={matchKey}");
-                Debug.LogError($"[交互调试] 将触发通用交互事件，请在InteractableObject的onInteractSuccess中绑定具体逻辑");
-                // 触发交互成功事件，让场景中的InteractableObject自己处理（通过Inspector绑定）
+                string itemName = selectedItem != null ? selectedItem.name : "null";
+                Debug.LogWarning($"[交互调试] ⚠ 未找到匹配的交互逻辑！");
+                Debug.LogWarning($"[交互调试] 物品名={itemName}，对象Tag={objectTag}，匹配键={matchKey}");
+                Debug.LogWarning($"[交互调试] 期望的匹配键：");
+                Debug.LogWarning($"[交互调试]   - jingpian_Vine（镜片+荆棘）");
+                Debug.LogWarning($"[交互调试]   - rongjieji_PaintingBase（溶解剂+油画）");
+                Debug.LogWarning($"[交互调试] 请检查：1)物品Sprite名字是否正确 2)交互对象的objectTag是否正确");
+                
+                // 即使匹配失败，也尝试触发交互（让用户看到效果，方便调试）
+                Debug.Log($"[交互调试] 尝试触发通用交互事件...");
                 interactObj.InvokeSuccessEvent();
+                
                 // 根据InteractableObject的dontConsumeItem设置决定是否消耗物品
                 if (!interactObj.dontConsumeItem)
                 {
                     ConsumeSelectedItem();
+                    Debug.Log($"[交互调试] 物品已消耗：{itemName}");
                 }
                 else
                 {
-                    Debug.Log($"[交互调试] 物品不消耗：{selectedItem.name}");
+                    Debug.Log($"[交互调试] 物品不消耗：{itemName}");
                 }
                 break;
         }
