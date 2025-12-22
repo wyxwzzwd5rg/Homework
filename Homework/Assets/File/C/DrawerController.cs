@@ -11,6 +11,10 @@ public class DrawerController : MonoBehaviour
     [Header("道具设置")]
     public GameObject propInDrawer; // 抽屉内的道具（拖入Unity编辑器）
 
+    [Header("锁定设置")]
+    public bool isLocked = true; // 抽屉是否被锁定（默认锁定，需要清除藤蔓后才能打开）
+    public string unlockKey = "vine_cleared"; // 解锁键（当GameData记录了这个ID时，抽屉解锁）
+
     [Header("动画设置")]
     public float moveDistance = 80f;  // 打开时移动的距离（Y轴负方向为向下）
     public float animDuration = 0.3f; // 动画持续时间
@@ -47,11 +51,35 @@ public class DrawerController : MonoBehaviour
         // 设置初始状态
         drawerImage.sprite = closedSprite;
         drawerImage.rectTransform.sizeDelta = closedSize;
+
+        // 检查是否已经解锁（场景重新加载时）
+        CheckUnlockStatus();
+    }
+
+    // 检查解锁状态（供外部调用，也供Start检查）
+    public void CheckUnlockStatus()
+    {
+        if (isLocked && !string.IsNullOrEmpty(unlockKey))
+        {
+            // 如果GameData记录了解锁键，则解锁抽屉
+            if (GameData.IsItemCollected(unlockKey))
+            {
+                isLocked = false;
+                Debug.Log($"[抽屉解锁] 抽屉已解锁（{unlockKey}）");
+            }
+        }
     }
 
     // 点击事件触发
     public void ToggleDrawer()
     {
+        // 检查是否被锁定
+        if (isLocked)
+        {
+            Debug.LogWarning("[抽屉] 抽屉被锁定，无法打开！请先清除藤蔓。");
+            return;
+        }
+
         isOpen = !isOpen;
 
         // 切换图片和尺寸

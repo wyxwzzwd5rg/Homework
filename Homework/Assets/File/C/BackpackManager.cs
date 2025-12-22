@@ -168,23 +168,28 @@ public class BackpackManager : MonoBehaviour
         // 3. 赋值selectedItem
         selectedItem = currentItem;
         selectedSlotIndex = slotIndex; // 同时记录选中的槽位索引
-        Debug.Log($"选中物品：{selectedItem.name}，槽位索引：{slotIndex}");
+        Debug.LogError($"[背包选中] 选中物品：{selectedItem.name}，槽位索引：{slotIndex}");
+        Debug.LogError($"[背包选中] 提示：现在可以点击场景中的交互对象（如藤蔓）来使用这个物品");
     }
 
     // BackpackManager.cs 中新增：
     // 通用交互方法：物品与场景对象交互
     public void OnInteractWithObject(string objectTag, InteractableObject interactObj)
     {
-        Debug.LogError($"进入交互逻辑：选中物品={selectedItem?.name}，交互对象Tag={objectTag}");
+        Debug.LogError($"[交互调试] 进入交互逻辑：选中物品={selectedItem?.name ?? "null"}，交互对象Tag={objectTag}");
 
         if (selectedItem == null)
         {
-            Debug.LogError("交互失败：未选中任何物品！");
+            Debug.LogError("[交互调试] 交互失败：未选中任何物品！请先在背包中点击物品槽位选中物品。");
             return;
         }
 
+        // 构建匹配键（物品名称 + 场景对象标签）
+        string matchKey = $"{selectedItem.name}_{objectTag}";
+        Debug.LogError($"[交互调试] 匹配键：{matchKey}，期望的镜片键：{mirrorPieceName}_Vine");
+
         // 根据“物品名称 + 场景对象标签”匹配交互逻辑
-        switch ($"{selectedItem.name}_{objectTag}")
+        switch (matchKey)
         {
             // 案例1：螺丝刀与布谷鸟交互
             case "luosidao_CuckooBird":
@@ -196,9 +201,19 @@ public class BackpackManager : MonoBehaviour
                 break;
             // 镜片与藤蔓交互：清除藤蔓，允许打开抽屉
             case var key when key == $"{mirrorPieceName}_Vine":
+                Debug.LogError($"[镜片交互] 匹配成功！使用镜片与藤蔓交互");
                 ConsumeSelectedItem();
+                
+                // 1. 记录藤蔓已清除（用于解锁抽屉）
+                GameData.AddCollectedItem("vine_cleared");
+                
+                // 2. 触发交互成功事件（隐藏藤蔓等）
                 interactObj.InvokeSuccessEvent();
-                Debug.Log("镜片切开藤蔓，抽屉可用");
+                
+                // 3. 解锁所有抽屉（查找场景中所有DrawerController并解锁）
+                UnlockAllDrawers();
+                
+                Debug.LogError("[镜片交互] 镜片切开藤蔓，抽屉已解锁！");
                 break;
             // 小刀与人物交互：获得放大镜
             case var key when key == $"{knifeName}_Person":
@@ -220,7 +235,11 @@ public class BackpackManager : MonoBehaviour
                 interactObj.InvokeSuccessEvent();
                 Debug.Log("使用溶解剂，油画溶解，获得雨伞");
                 break;
-                // 后续新增物品交互时，直接在这里添加case即可
+            // 默认：未匹配到任何交互
+            default:
+                Debug.LogError($"[交互调试] 未找到匹配的交互逻辑！物品名={selectedItem.name}，对象Tag={objectTag}，匹配键={matchKey}");
+                Debug.LogError($"[交互调试] 提示：请检查1)物品Sprite名字是否为'{mirrorPieceName}' 2)藤蔓的objectTag是否为'Vine'");
+                break;
         }
     }
 
@@ -261,5 +280,19 @@ public class BackpackManager : MonoBehaviour
         generated.name = desiredName;
         Debug.LogWarning($"未找到素材，自动生成占位Sprite：{desiredName}");
         return generated;
+    }
+
+    // 解锁所有抽屉（镜片清除藤蔓后调用）
+    private void UnlockAllDrawers()
+    {
+        DrawerController[] allDrawers = FindObjectsOfType<DrawerController>();
+        foreach (var drawer in allDrawers)
+        {
+            if (drawer != null)
+            {
+                drawer.CheckUnlockStatus();
+                Debug.Log($"[抽屉解锁] 已通知抽屉解锁：{drawer.gameObject.name}");
+            }
+        }
     }
 }

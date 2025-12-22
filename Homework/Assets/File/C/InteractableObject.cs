@@ -9,6 +9,8 @@ public class InteractableObject : MonoBehaviour
     public bool alwaysActive = false;
     [Tooltip("交互成功时触发的事件（可在Inspector绑定隐藏藤蔓、打开抽屉等逻辑）")]
     public UnityEvent onInteractSuccess;
+    [Tooltip("如果为true，交互成功后自动隐藏自己（用于藤蔓等物体）")]
+    public bool autoHideOnSuccess = false;
 
     private bool isCuckooActive = false; // 新增：记录布谷鸟是否已显示
 
@@ -58,6 +60,14 @@ public class InteractableObject : MonoBehaviour
     // 供通用交互调用：让Inspector中绑定的行为执行
     public void InvokeSuccessEvent()
     {
+        // 先触发Inspector中绑定的事件
         onInteractSuccess?.Invoke();
+        
+        // 如果设置了自动隐藏，则隐藏自己（用于藤蔓等物体）
+        if (autoHideOnSuccess)
+        {
+            gameObject.SetActive(false);
+            Debug.Log($"[交互] {gameObject.name} 已自动隐藏");
+        }
     }
 }

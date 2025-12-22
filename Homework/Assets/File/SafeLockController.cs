@@ -193,14 +193,26 @@ public class SafeLockController : MonoBehaviour
     // 道具拾取后调用（内部逻辑）
     public void OnPropCollected()
     {
-        // 1. 调用原有背包收集方法（完全复用）
+        // 1. 确保Sprite名字正确（关键修复：镜片必须叫"jingpian"才能和藤蔓交互）
+        if (rewardSprite != null)
+        {
+            // 如果rewardSpriteName配置了，就用配置的名字；否则保持原名字
+            // 但如果是镜片（rewardItemId包含"mirror"或"lens"），强制改为"jingpian"
+            if (rewardItemId.Contains("mirror") || rewardItemId.Contains("lens") || rewardItemId.Contains("safe1"))
+            {
+                rewardSprite.name = "jingpian";
+                Debug.Log($"[镜片修复] 强制设置Sprite名字为：jingpian");
+            }
+        }
+
+        // 2. 调用原有背包收集方法（完全复用）
         if (BackpackManager.Instance != null)
         {
             BackpackManager.Instance.CollectItem(rewardSprite);
             GameData.AddCollectedItem(rewardItemId);
-            Debug.Log($"获得道具：{rewardSprite.name}（复用原有收集逻辑）");
+            Debug.Log($"[保险柜] 获得道具：{rewardSprite?.name}，ID：{rewardItemId}");
         }
-        // 2. 销毁道具物体（道具消失）
+        // 3. 销毁道具物体（道具消失）
         if (_rewardPropObj != null)
         {
             Destroy(_rewardPropObj);
