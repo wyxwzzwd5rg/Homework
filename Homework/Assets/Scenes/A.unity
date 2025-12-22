@@ -2920,7 +2920,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -553.9601, y: -493}
+  m_AnchoredPosition: {x: -553.95996, y: -493}
   m_SizeDelta: {x: -1764.79, y: -1045.71}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &606351385
@@ -4250,6 +4250,8 @@ MonoBehaviour:
   closedSprite: {fileID: 21300000, guid: 3bd37f4b2eb822f40821316383b212ab, type: 3}
   openSprite: {fileID: 21300000, guid: 8d7423933f7f6ba439fcaa5e7dacdd90, type: 3}
   propInDrawer: {fileID: 0}
+  isLocked: 1
+  unlockKey: vine_cleared
   moveDistance: 80
   animDuration: 0.3
   scaleFactor: 0.007
@@ -4829,6 +4831,7 @@ MonoBehaviour:
   Camera2: {fileID: 928520402}
   Camera3: {fileID: 1395306846}
   Camera4: {fileID: 1526401061}
+  UiCanvas: {fileID: 1855781555}
   BackpackCanvas: {fileID: 989514187}
   allCamerasForBackpack:
   - {fileID: 659681938}
@@ -4838,9 +4841,6 @@ MonoBehaviour:
   - {fileID: 464078890}
   BtnLeft: {fileID: 507081783}
   BtnRight: {fileID: 919913743}
-  UiCanvas: {fileID: 1855781555}
-  Offset: 10
-  ButtonSize: {x: 1, y: 1}
 --- !u!4 &969827989
 Transform:
   m_ObjectHideFlags: 0
@@ -7145,6 +7145,8 @@ MonoBehaviour:
   closedSprite: {fileID: 21300000, guid: 3bd37f4b2eb822f40821316383b212ab, type: 3}
   openSprite: {fileID: 21300000, guid: 8d7423933f7f6ba439fcaa5e7dacdd90, type: 3}
   propInDrawer: {fileID: 0}
+  isLocked: 1
+  unlockKey: vine_cleared
   moveDistance: 80
   animDuration: 0.3
   scaleFactor: 0.007
@@ -7366,7 +7368,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   objectTag: Vine
-  springSprite: {fileID: 0}
+  springSprite: {fileID: 1792519137}
   alwaysActive: 1
   onInteractSuccess:
     m_PersistentCalls:
@@ -7383,6 +7385,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 1
+  autoHideOnSuccess: 0
 --- !u!212 &1513622881
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -7678,6 +7681,8 @@ MonoBehaviour:
   closedSprite: {fileID: 21300000, guid: 3bd37f4b2eb822f40821316383b212ab, type: 3}
   openSprite: {fileID: 21300000, guid: 8d7423933f7f6ba439fcaa5e7dacdd90, type: 3}
   propInDrawer: {fileID: 1792519137}
+  isLocked: 1
+  unlockKey: vine_cleared
   moveDistance: 80
   animDuration: 0.3
   scaleFactor: 0.007
@@ -9199,6 +9204,8 @@ MonoBehaviour:
   closedSprite: {fileID: 21300000, guid: 3bd37f4b2eb822f40821316383b212ab, type: 3}
   openSprite: {fileID: 21300000, guid: 8d7423933f7f6ba439fcaa5e7dacdd90, type: 3}
   propInDrawer: {fileID: 0}
+  isLocked: 1
+  unlockKey: vine_cleared
   moveDistance: 80
   animDuration: 0.3
   scaleFactor: 0.007
