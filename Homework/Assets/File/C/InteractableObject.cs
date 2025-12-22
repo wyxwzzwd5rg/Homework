@@ -11,6 +11,16 @@ public class InteractableObject : MonoBehaviour
     public UnityEvent onInteractSuccess;
     [Tooltip("如果为true，交互成功后自动隐藏自己（用于藤蔓等物体）")]
     public bool autoHideOnSuccess = false;
+    [Tooltip("场景A：如果勾选，交互成功时会解锁所有抽屉（用于镜片+藤蔓交互）")]
+    public bool unlockDrawersOnSuccess = false;
+    [Tooltip("场景A：交互成功后要显示的道具物体（带ItemClickHandler，用于小刀+人物等交互）")]
+    public GameObject showItemOnSuccess;
+    [Tooltip("场景A：如果勾选，交互成功时不会消耗物品（用于放大镜查看油画等）")]
+    public bool dontConsumeItem = false;
+    [Tooltip("场景A：交互成功后要显示的UI面板（用于放大镜+油画等）")]
+    public GameObject showUIPanelOnSuccess;
+    [Tooltip("场景A：交互成功后要隐藏的物体（用于溶解剂+油画等）")]
+    public GameObject hideObjectOnSuccess;
 
     private bool isCuckooActive = false; // 新增：记录布谷鸟是否已显示
 
@@ -68,6 +78,70 @@ public class InteractableObject : MonoBehaviour
         {
             gameObject.SetActive(false);
             Debug.Log($"[交互] {gameObject.name} 已自动隐藏");
+        }
+
+        // 场景A：如果设置了解锁抽屉，则解锁所有抽屉（用于镜片+藤蔓交互）
+        if (unlockDrawersOnSuccess)
+        {
+            UnlockAllDrawers();
+        }
+
+        // 场景A：如果设置了显示道具，则显示道具（用于小刀+人物等交互）
+        if (showItemOnSuccess != null)
+        {
+            ShowItemObject();
+        }
+
+        // 场景A：如果设置了显示UI面板，则显示UI（用于放大镜+油画等）
+        if (showUIPanelOnSuccess != null)
+        {
+            showUIPanelOnSuccess.SetActive(true);
+            Debug.Log($"[场景A] UI面板已显示：{showUIPanelOnSuccess.name}");
+        }
+
+        // 场景A：如果设置了隐藏物体，则隐藏物体（用于溶解剂+油画等）
+        if (hideObjectOnSuccess != null)
+        {
+            hideObjectOnSuccess.SetActive(false);
+            Debug.Log($"[场景A] 物体已隐藏：{hideObjectOnSuccess.name}");
+        }
+    }
+
+    // 解锁所有抽屉（场景A：镜片+藤蔓交互时调用）
+    private void UnlockAllDrawers()
+    {
+        // 记录藤蔓已清除（用于解锁抽屉）
+        GameData.AddCollectedItem("vine_cleared");
+
+        // 解锁所有抽屉
+        DrawerController[] allDrawers = FindObjectsOfType<DrawerController>();
+        foreach (var drawer in allDrawers)
+        {
+            if (drawer != null)
+            {
+                drawer.CheckUnlockStatus();
+                Debug.Log($"[场景A] 抽屉已解锁：{drawer.gameObject.name}");
+            }
+        }
+
+        Debug.Log($"[场景A] 镜片切开藤蔓，抽屉已解锁！");
+    }
+
+    // 显示道具物体（场景A：小刀+人物等交互时调用）
+    private void ShowItemObject()
+    {
+        if (showItemOnSuccess == null) return;
+
+        ItemClickHandler itemHandler = showItemOnSuccess.GetComponent<ItemClickHandler>();
+        if (itemHandler != null)
+        {
+            // 显示道具（如果未收集）
+            itemHandler.CheckAndSetActive();
+            Debug.Log($"[场景A] 道具已显示：{showItemOnSuccess.name}");
+        }
+        else
+        {
+            Debug.LogError($"[场景A] 道具物体缺少ItemClickHandler组件！");
         }
     }
 }

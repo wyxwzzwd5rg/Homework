@@ -13,11 +13,9 @@ public class SafeLockController : MonoBehaviour
     public string safePassword; // 自定义密码（如1234）
     public bool autoCloseUIPanel = true;
 
-    [Header("【奖励道具配置（复用原有道具）】")]
-    public string rewardItemId = "item_reward"; // 原有ID：safe1_lens/safe2_solvent
-    public Sprite rewardSprite; // 原有Sprite：jingpian/rongjieji
-    public Vector3 rewardPropOffset = new Vector3(0, 1f, 0); // 道具显示在保险柜上方的偏移
-    private GameObject _rewardPropObj; // 临时显示的道具物体
+    [Header("【奖励道具配置（场景中预先放置的道具）】")]
+    public string rewardItemId = "item_reward"; // 道具唯一ID：safe1_lens/safe2_solvent
+    public GameObject rewardPropObject; // 场景中预先放置的道具物体（必须挂ItemClickHandler，初始隐藏）
 
     [Header("【全局密码UI引用】")]
     public static GameObject GlobalLockPanel;
@@ -54,11 +52,23 @@ public class SafeLockController : MonoBehaviour
 
     private void Start()
     {
+        // 初始化：确保道具物体初始隐藏（如果未收集）
+        if (rewardPropObject != null)
+        {
+            ItemClickHandler itemHandler = rewardPropObject.GetComponent<ItemClickHandler>();
+            if (itemHandler != null)
+            {
+                // 使用CheckAndSetActive逻辑：如果已收集则隐藏，未收集则隐藏（等解锁后显示）
+                rewardPropObject.SetActive(false);
+            }
+        }
+
         // 已领奖则直接显示打开状态（复用GameData原有逻辑）
         if (GameData.IsItemCollected(rewardItemId))
         {
             SetSafeToOpenedState();
-            if (_rewardPropObj != null) Destroy(_rewardPropObj); // 道具已领则隐藏
+            // 道具已收集，确保隐藏
+            if (rewardPropObject != null) rewardPropObject.SetActive(false);
         }
     }
 
@@ -136,10 +146,10 @@ public class SafeLockController : MonoBehaviour
         }
     }
 
-    // 密码正确：切换保险柜图片+显示可点击道具（核心修改）
+    // 密码正确：切换保险柜图片+显示场景中的道具（核心修改）
     private void OnPasswordCorrect()
     {
-        // 1. 切换保险柜为打开状态（仅换图，不发道具）
+        // 1. 切换保险柜为打开状态（仅换图）
         SetSafeToOpenedState();
 
         // 2. 关闭密码UI（可选）
@@ -148,8 +158,8 @@ public class SafeLockController : MonoBehaviour
             GlobalLockPanel.SetActive(false);
         }
 
-        // 3. 生成可点击的道具（单独显示，复用原有拾取逻辑）
-        SpawnRewardProp();
+        // 3. 显示场景中预先放置的道具（复用小刀逻辑）
+        ShowRewardProp();
     }
 
     // 切换保险柜图片为打开状态（永久保持）
@@ -167,56 +177,111 @@ public class SafeLockController : MonoBehaviour
         if (col2D != null) col2D.enabled = false;
     }
 
-    // 生成可点击的奖励道具（彻底解决onClick报错，复用原有背包逻辑）
-    private void SpawnRewardProp()
+    // 显示场景中预先放置的道具（复用小刀逻辑）
+    private void ShowRewardProp()
     {
-        if (rewardSprite == null || _rewardPropObj != null || GameData.IsItemCollected(rewardItemId)) return;
-
-        // 创建临时物体显示道具（复用原有Sprite）
-        _rewardPropObj = new GameObject($"RewardProp_{rewardItemId}");
-        _rewardPropObj.transform.position = transform.position + rewardPropOffset;
-
-        // 添加SpriteRenderer显示道具图片（显示在保险柜上层）
-        SpriteRenderer propRenderer = _rewardPropObj.AddComponent<SpriteRenderer>();
-        propRenderer.sprite = rewardSprite;
-        propRenderer.sortingOrder = _safeSpriteRenderer.sortingOrder + 1;
-
-        // 添加碰撞体（用于点击）
-        Collider2D propCollider = _rewardPropObj.AddComponent<BoxCollider2D>();
-        propCollider.isTrigger = false;
-
-        // 直接添加点击逻辑（无需ItemClickHandler的onClick）
-        PropClickLogic clickLogic = _rewardPropObj.AddComponent<PropClickLogic>();
-        clickLogic.Init(rewardItemId, rewardSprite, this);
-    }
-
-    // 道具拾取后调用（内部逻辑）
-    public void OnPropCollected()
-    {
-        // 1. 确保Sprite名字正确（关键修复：镜片必须叫"jingpian"才能和藤蔓交互）
-        if (rewardSprite != null)
+        if (rewardPropObject == null)
         {
-            // 如果rewardSpriteName配置了，就用配置的名字；否则保持原名字
-            // 但如果是镜片（rewardItemId包含"mirror"或"lens"），强制改为"jingpian"
+            Debug.LogWarning($"[保险柜] 未设置rewardPropObject，无法显示道具！");
+            return;
+        }
+
+        // 检查道具是否已收集
+        if (GameData.IsItemCollected(rewardItemId))
+        {
+            Debug.Log($"[保险柜] 道具已收集过，不显示：{rewardItemId}");
+            rewardPropObject.SetActive(false);
+            return;
+        }
+
+        // 获取ItemClickHandler组件
+        ItemClickHandler itemHandler = rewardPropObject.GetComponent<ItemClickHandler>();
+        if (itemHandler == null)
+        {
+            Debug.LogError($"[保险柜] 道具物体 {rewardPropObject.name} 缺少ItemClickHandler组件！请添加该组件。");
+            return;
+        }
+
+        // 使用CheckAndSetActive逻辑：如果未收集则显示，已收集则隐藏
+        itemHandler.CheckAndSetActive();
+        
+        // 确保道具Sprite名字正确（关键修复：镜片必须叫"jingpian"才能和藤蔓交互）
+        if (itemHandler.itemSprite != null)
+        {
+            // 如果是镜片（rewardItemId包含"mirror"或"lens"或"safe1"），强制改为"jingpian"
             if (rewardItemId.Contains("mirror") || rewardItemId.Contains("lens") || rewardItemId.Contains("safe1"))
             {
-                rewardSprite.name = "jingpian";
+                itemHandler.itemSprite.name = "jingpian";
                 Debug.Log($"[镜片修复] 强制设置Sprite名字为：jingpian");
+            }
+            // 如果是溶解剂（rewardItemId包含"solvent"或"safe2"），确保名字为"rongjieji"
+            else if (rewardItemId.Contains("solvent") || rewardItemId.Contains("safe2"))
+            {
+                itemHandler.itemSprite.name = "rongjieji";
+                Debug.Log($"[溶解剂修复] 强制设置Sprite名字为：rongjieji");
             }
         }
 
-        // 2. 调用原有背包收集方法（完全复用）
-        if (BackpackManager.Instance != null)
+        // 确保道具可见且可点击（关键修复：解决游戏画面看不到的问题）
+        EnsurePropVisibleAndClickable();
+
+        Debug.Log($"[保险柜] 道具已显示：{rewardPropObject.name}，点击可收集");
+    }
+
+    // 确保道具可见且可点击（修复游戏画面看不到的问题）
+    private void EnsurePropVisibleAndClickable()
+    {
+        if (rewardPropObject == null) return;
+
+        // 1. 确保物体是激活的
+        rewardPropObject.SetActive(true);
+
+        // 2. 确保SpriteRenderer可见（设置正确的Sorting Order，确保在保险柜前面）
+        SpriteRenderer propRenderer = rewardPropObject.GetComponent<SpriteRenderer>();
+        if (propRenderer != null)
         {
-            BackpackManager.Instance.CollectItem(rewardSprite);
-            GameData.AddCollectedItem(rewardItemId);
-            Debug.Log($"[保险柜] 获得道具：{rewardSprite?.name}，ID：{rewardItemId}");
+            // 确保SpriteRenderer是启用的
+            propRenderer.enabled = true;
+            
+            // 设置Sorting Order，确保道具显示在保险柜前面（保险柜的sortingOrder + 1）
+            if (_safeSpriteRenderer != null)
+            {
+                propRenderer.sortingOrder = _safeSpriteRenderer.sortingOrder + 1;
+                Debug.Log($"[保险柜] 道具Sorting Order设置为：{propRenderer.sortingOrder}（保险柜：{_safeSpriteRenderer.sortingOrder}）");
+            }
+            else
+            {
+                // 如果保险柜没有SpriteRenderer，设置一个默认值
+                propRenderer.sortingOrder = 10;
+            }
+
+            // 确保颜色不透明
+            Color propColor = propRenderer.color;
+            propColor.a = 1f;
+            propRenderer.color = propColor;
         }
-        // 3. 销毁道具物体（道具消失）
-        if (_rewardPropObj != null)
+
+        // 3. 确保Collider是启用的（用于点击检测）
+        Collider2D propCollider2D = rewardPropObject.GetComponent<Collider2D>();
+        if (propCollider2D != null)
         {
-            Destroy(_rewardPropObj);
+            propCollider2D.enabled = true;
+            Debug.Log($"[保险柜] 道具Collider2D已启用");
         }
+        else
+        {
+            // 如果没有Collider2D，添加一个
+            BoxCollider2D newCollider = rewardPropObject.AddComponent<BoxCollider2D>();
+            newCollider.isTrigger = false; // 不是触发器，用于点击检测
+            Debug.Log($"[保险柜] 已为道具添加BoxCollider2D");
+        }
+
+        // 4. 确保Z坐标正确（2D场景通常Z=0）
+        Vector3 propPos = rewardPropObject.transform.position;
+        propPos.z = 0f; // 确保在摄像机前面
+        rewardPropObject.transform.position = propPos;
+
+        Debug.Log($"[保险柜] 道具位置：{propPos}，已确保可见且可点击");
     }
 
     private IEnumerator ResetInputAfterDelay(float delay)
@@ -229,36 +294,5 @@ public class SafeLockController : MonoBehaviour
     private static void UpdateDisplay(string content)
     {
         if (GlobalDisplayText != null) GlobalDisplayText.text = content;
-    }
-
-    // 防止场景切换时残留道具物体
-    private void OnDestroy()
-    {
-        if (_rewardPropObj != null)
-        {
-            Destroy(_rewardPropObj);
-        }
-    }
-}
-
-// 道具点击辅助类（内嵌，无需单独创建脚本）
-public class PropClickLogic : MonoBehaviour
-{
-    private string _rewardItemId;
-    private Sprite _rewardSprite;
-    private SafeLockController _safeController;
-
-    // 初始化道具信息
-    public void Init(string itemId, Sprite sprite, SafeLockController safeController)
-    {
-        _rewardItemId = itemId;
-        _rewardSprite = sprite;
-        _safeController = safeController;
-    }
-
-    // 点击道具触发收集
-    private void OnMouseDown()
-    {
-        _safeController.OnPropCollected();
     }
 }

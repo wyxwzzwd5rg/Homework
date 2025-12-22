@@ -9,18 +9,6 @@ public class BackpackManager : MonoBehaviour
     public int selectedSlotIndex = -1; // 当前选中的背包槽索引（-1表示未选中）
     public Sprite selectedItem; // 当前选中的物品Sprite
 
-    [Header("场景A动态道具占位与命名")]
-    public string mirrorPieceName = "jingpian";       // 镜片
-    public string knifeName = "xiaodao";               // 小刀
-    public string magnifierName = "fangdajing";        // 放大镜
-    public string solventName = "rongjieji";            // 溶解剂
-    public string umbrellaName = "yusan";              // 雨伞
-    public Sprite mirrorPieceSprite;   // 保险柜1奖励
-    public Sprite magnifierSprite;     // 人物交互奖励
-    public Sprite solventSprite;       // 保险柜2奖励
-    public Sprite umbrellaSprite;      // 溶解后掉落
-    public Color placeholderColor = new Color(0.8f, 0.8f, 0.8f, 1f);
-
     // 单例实例（全局唯一，其他脚本可通过 BackpackManager.Instance 访问）
     public static BackpackManager Instance;
 
@@ -176,22 +164,24 @@ public class BackpackManager : MonoBehaviour
     // 通用交互方法：物品与场景对象交互
     public void OnInteractWithObject(string objectTag, InteractableObject interactObj)
     {
-        Debug.LogError($"[交互调试] 进入交互逻辑：选中物品={selectedItem?.name ?? "null"}，交互对象Tag={objectTag}");
-
+        // 检查是否有选中物品
         if (selectedItem == null)
         {
-            Debug.LogError("[交互调试] 交互失败：未选中任何物品！请先在背包中点击物品槽位选中物品。");
+            Debug.LogWarning($"[交互调试] 交互失败：未选中任何物品！请先在背包中点击物品槽位选中物品。对象Tag={objectTag}");
             return;
         }
 
+        Debug.Log($"[交互调试] 进入交互逻辑：选中物品={selectedItem.name}，交互对象Tag={objectTag}");
+
         // 构建匹配键（物品名称 + 场景对象标签）
         string matchKey = $"{selectedItem.name}_{objectTag}";
-        Debug.LogError($"[交互调试] 匹配键：{matchKey}，期望的镜片键：{mirrorPieceName}_Vine");
+        Debug.LogError($"[交互调试] 匹配键：{matchKey}");
 
         // 根据“物品名称 + 场景对象标签”匹配交互逻辑
+        // 注意：只保留原有场景的交互逻辑，新场景的交互通过InteractableObject的onInteractSuccess事件处理
         switch (matchKey)
         {
-            // 案例1：螺丝刀与布谷鸟交互
+            // 案例1：螺丝刀与布谷鸟交互（原有逻辑，保持不变）
             case "luosidao_CuckooBird":
                 // 1. 移除背包中的螺丝刀（保持原有）
                 ConsumeSelectedItem();
@@ -199,46 +189,21 @@ public class BackpackManager : MonoBehaviour
                 interactObj.ShowSpring();
                 Debug.Log("使用螺丝刀，布谷鸟弹出弹簧！");
                 break;
-            // 镜片与藤蔓交互：清除藤蔓，允许打开抽屉
-            case var key when key == $"{mirrorPieceName}_Vine":
-                Debug.LogError($"[镜片交互] 匹配成功！使用镜片与藤蔓交互");
-                ConsumeSelectedItem();
-                
-                // 1. 记录藤蔓已清除（用于解锁抽屉）
-                GameData.AddCollectedItem("vine_cleared");
-                
-                // 2. 触发交互成功事件（隐藏藤蔓等）
-                interactObj.InvokeSuccessEvent();
-                
-                // 3. 解锁所有抽屉（查找场景中所有DrawerController并解锁）
-                UnlockAllDrawers();
-                
-                Debug.LogError("[镜片交互] 镜片切开藤蔓，抽屉已解锁！");
-                break;
-            // 小刀与人物交互：获得放大镜
-            case var key when key == $"{knifeName}_Person":
-                ConsumeSelectedItem();
-                CollectRuntimeItem(GetOrCreateSprite(magnifierSprite, magnifierName, new Color(0.9f, 0.9f, 0.6f, 1f)), "item_magnifier");
-                interactObj.InvokeSuccessEvent();
-                Debug.Log("使用小刀完成交互，获得放大镜");
-                break;
-            // 放大镜与油画交互：打开放大UI
-            case var key when key == $"{magnifierName}_PaintingZoom":
-                // 放大镜不消耗，保持选中
-                interactObj.InvokeSuccessEvent();
-                Debug.Log("使用放大镜查看油画，打开放大UI");
-                break;
-            // 溶解剂与油画交互：溶解并掉落雨伞
-            case var key when key == $"{solventName}_PaintingBase":
-                ConsumeSelectedItem();
-                CollectRuntimeItem(GetOrCreateSprite(umbrellaSprite, umbrellaName, new Color(0.6f, 0.8f, 1f, 1f)), "item_umbrella");
-                interactObj.InvokeSuccessEvent();
-                Debug.Log("使用溶解剂，油画溶解，获得雨伞");
-                break;
-            // 默认：未匹配到任何交互
+            // 默认：未匹配到任何交互，触发通用交互事件（让场景自己处理）
             default:
                 Debug.LogError($"[交互调试] 未找到匹配的交互逻辑！物品名={selectedItem.name}，对象Tag={objectTag}，匹配键={matchKey}");
-                Debug.LogError($"[交互调试] 提示：请检查1)物品Sprite名字是否为'{mirrorPieceName}' 2)藤蔓的objectTag是否为'Vine'");
+                Debug.LogError($"[交互调试] 将触发通用交互事件，请在InteractableObject的onInteractSuccess中绑定具体逻辑");
+                // 触发交互成功事件，让场景中的InteractableObject自己处理（通过Inspector绑定）
+                interactObj.InvokeSuccessEvent();
+                // 根据InteractableObject的dontConsumeItem设置决定是否消耗物品
+                if (!interactObj.dontConsumeItem)
+                {
+                    ConsumeSelectedItem();
+                }
+                else
+                {
+                    Debug.Log($"[交互调试] 物品不消耗：{selectedItem.name}");
+                }
                 break;
         }
     }
@@ -255,44 +220,4 @@ public class BackpackManager : MonoBehaviour
         selectedItem = null;
     }
 
-    private void CollectRuntimeItem(Sprite sprite, string itemId)
-    {
-        if (sprite == null)
-        {
-            Debug.LogError($"CollectRuntimeItem失败：sprite为空，itemId={itemId}");
-            return;
-        }
-        CollectItem(sprite);
-        GameData.AddCollectedItem(itemId);
-    }
-
-    private Sprite GetOrCreateSprite(Sprite input, string desiredName, Color color)
-    {
-        if (input != null) return input;
-
-        // 生成一个临时占位Sprite，避免素材缺失阻塞流程
-        Texture2D tex = new Texture2D(64, 64);
-        Color[] colors = new Color[64 * 64];
-        for (int i = 0; i < colors.Length; i++) colors[i] = color.a > 0 ? color : placeholderColor;
-        tex.SetPixels(colors);
-        tex.Apply();
-        Sprite generated = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f), 100f);
-        generated.name = desiredName;
-        Debug.LogWarning($"未找到素材，自动生成占位Sprite：{desiredName}");
-        return generated;
-    }
-
-    // 解锁所有抽屉（镜片清除藤蔓后调用）
-    private void UnlockAllDrawers()
-    {
-        DrawerController[] allDrawers = FindObjectsOfType<DrawerController>();
-        foreach (var drawer in allDrawers)
-        {
-            if (drawer != null)
-            {
-                drawer.CheckUnlockStatus();
-                Debug.Log($"[抽屉解锁] 已通知抽屉解锁：{drawer.gameObject.name}");
-            }
-        }
-    }
 }
