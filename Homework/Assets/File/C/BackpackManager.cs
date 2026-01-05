@@ -279,9 +279,13 @@ public class BackpackManager : MonoBehaviour
         // 构建匹配键（物品名称 + 场景对象标签）
         string matchKey = $"{selectedItemName}_{objectTag}";
         Debug.Log($"[交互调试] 匹配键：{matchKey}");
-        Debug.Log($"[交互调试] 期望匹配：jingpian_Vine（镜片+荆棘）或 rongjieji_PaintingBase（溶解剂+油画）");
+        Debug.Log($"[交互调试] 期望匹配：");
+        Debug.Log($"[交互调试]   - jingpian_Vine（镜片+荆棘）");
+        Debug.Log($"[交互调试]   - xiaodao_Person（小刀+人物）");
+        Debug.Log($"[交互调试]   - fangdajing_Artwork（放大镜+艺术品）");
+        Debug.Log($"[交互调试]   - rongjieji_PaintingBase（溶解剂+油画）");
 
-        // 根据“物品名称 + 场景对象标签”匹配交互逻辑
+        // 根据"物品名称 + 场景对象标签"匹配交互逻辑
         switch (matchKey)
         {
             // 案例1：螺丝刀与布谷鸟交互（原有逻辑，保持不变）
@@ -304,6 +308,29 @@ public class BackpackManager : MonoBehaviour
                 ConsumeSelectedItem();
                 Debug.Log($"[镜片+荆棘] ✓ 交互完成：荆棘已消失，抽屉已解锁");
                 break;
+            // 场景A：小刀与人物交互（明确匹配，确保交互成功）
+            case "xiaodao_Person":
+            case "xiaodao_person":
+            case "Xiaodao_Person":
+            case "Xiaodao_person":
+                Debug.Log($"[小刀+人物] ✓ 匹配成功！开始交互");
+                // 触发交互成功事件（人物会显示放大镜道具）
+                interactObj.InvokeSuccessEvent();
+                // 消耗小刀
+                ConsumeSelectedItem();
+                Debug.Log($"[小刀+人物] ✓ 交互完成：放大镜已显示");
+                break;
+            // 场景A：放大镜与艺术品交互（明确匹配，确保交互成功）
+            case "fangdajing_Artwork":
+            case "fangdajing_artwork":
+            case "Fangdajing_Artwork":
+            case "Fangdajing_artwork":
+                Debug.Log($"[放大镜+艺术品] ✓ 匹配成功！开始交互");
+                // 触发交互成功事件（显示放大UI面板，不消耗放大镜）
+                interactObj.InvokeSuccessEvent();
+                // 不消耗放大镜（因为dontConsumeItem=true）
+                Debug.Log($"[放大镜+艺术品] ✓ 交互完成：放大UI已显示，放大镜未消耗");
+                break;
             // 场景A：溶解剂与油画交互（明确匹配，确保交互成功）
             case "rongjieji_PaintingBase":
             case "rongjieji_paintingbase":
@@ -316,31 +343,36 @@ public class BackpackManager : MonoBehaviour
                 ConsumeSelectedItem();
                 Debug.Log($"[溶解剂+油画] ✓ 交互完成：油画已消失，伞已显示");
                 break;
-            // 默认：未匹配到任何交互，触发通用交互事件（让场景自己处理）
+            // 默认：未匹配到任何交互，拒绝交互（防止错误匹配）
             default:
                 string itemName = selectedItem != null ? selectedItem.name : "null";
                 Debug.LogWarning($"[交互调试] ⚠ 未找到匹配的交互逻辑！");
                 Debug.LogWarning($"[交互调试] 物品名={itemName}，对象Tag={objectTag}，匹配键={matchKey}");
                 Debug.LogWarning($"[交互调试] 期望的匹配键：");
                 Debug.LogWarning($"[交互调试]   - jingpian_Vine（镜片+荆棘）");
+                Debug.LogWarning($"[交互调试]   - xiaodao_Person（小刀+人物）");
+                Debug.LogWarning($"[交互调试]   - fangdajing_Artwork（放大镜+艺术品）");
                 Debug.LogWarning($"[交互调试]   - rongjieji_PaintingBase（溶解剂+油画）");
                 Debug.LogWarning($"[交互调试] 请检查：1)物品Sprite名字是否正确 2)交互对象的objectTag是否正确");
                 
-                // 即使匹配失败，也尝试触发交互（让用户看到效果，方便调试）
-                Debug.Log($"[交互调试] 尝试触发通用交互事件...");
-                interactObj.InvokeSuccessEvent();
+                // 明确拒绝不匹配的交互（防止油画和放大镜交互等错误情况）
+                Debug.LogWarning($"[交互调试] ✗ 交互被拒绝：{itemName} 不能与 {objectTag} 交互");
                 
-                // 根据InteractableObject的dontConsumeItem设置决定是否消耗物品
-                if (!interactObj.dontConsumeItem)
+                // 特殊检查：如果油画（PaintingBase）被放大镜点击，明确拒绝
+                if (objectTag == "PaintingBase" && itemName == "fangdajing")
                 {
-                    ConsumeSelectedItem();
-                    Debug.Log($"[交互调试] 物品已消耗：{itemName}");
+                    Debug.LogError($"[交互错误] ✗ 油画（PaintingBase）只能与溶解剂交互，不能与放大镜交互！");
+                    Debug.LogError($"[交互错误] 请使用溶解剂（rongjieji）与油画交互。");
                 }
-                else
+                // 特殊检查：如果艺术品（Artwork）被溶解剂点击，明确拒绝
+                else if (objectTag == "Artwork" && itemName == "rongjieji")
                 {
-                    Debug.Log($"[交互调试] 物品不消耗：{itemName}");
+                    Debug.LogError($"[交互错误] ✗ 艺术品（Artwork）只能与放大镜交互，不能与溶解剂交互！");
+                    Debug.LogError($"[交互错误] 请使用放大镜（fangdajing）与艺术品交互。");
                 }
-                break;
+                
+                // 不触发任何交互，直接返回
+                return;
         }
     }
 

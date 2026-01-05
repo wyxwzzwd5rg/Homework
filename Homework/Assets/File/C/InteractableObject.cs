@@ -32,6 +32,27 @@ public class InteractableObject : MonoBehaviour
         }
         
         Debug.Log($"[交互对象检查] {gameObject.name} - objectTag={objectTag}，alwaysActive={alwaysActive}");
+        
+        // 场景A：确保showItemOnSuccess物体初始隐藏（如果未收集）
+        if (showItemOnSuccess != null)
+        {
+            ItemClickHandler itemHandler = showItemOnSuccess.GetComponent<ItemClickHandler>();
+            if (itemHandler != null)
+            {
+                // 如果未收集，确保初始隐藏（等交互后再显示）
+                if (!GameData.IsItemCollected(itemHandler.itemId))
+                {
+                    showItemOnSuccess.SetActive(false);
+                    Debug.Log($"[场景A] 道具物体初始隐藏：{showItemOnSuccess.name}（等待交互后显示）");
+                }
+                else
+                {
+                    // 如果已收集，也隐藏
+                    showItemOnSuccess.SetActive(false);
+                    Debug.Log($"[场景A] 道具物体已收集，保持隐藏：{showItemOnSuccess.name}");
+                }
+            }
+        }
     }
     [Tooltip("交互成功时触发的事件（可在Inspector绑定隐藏藤蔓、打开抽屉等逻辑）")]
     public UnityEvent onInteractSuccess;
@@ -238,13 +259,22 @@ public class InteractableObject : MonoBehaviour
     {
         if (showItemOnSuccess == null) return;
 
-        // 确保物体是激活的
-        showItemOnSuccess.SetActive(true);
-        Debug.Log($"[场景A] 道具物体已激活：{showItemOnSuccess.name}");
-
         ItemClickHandler itemHandler = showItemOnSuccess.GetComponent<ItemClickHandler>();
         if (itemHandler != null)
         {
+            // 先检查是否已收集，如果已收集则不显示
+            if (GameData.IsItemCollected(itemHandler.itemId))
+            {
+                Debug.Log($"[场景A] 道具已收集过，不显示：{itemHandler.itemId}");
+                showItemOnSuccess.SetActive(false);
+                return;
+            }
+
+            // 如果未收集，则显示道具
+            // 确保物体是激活的
+            showItemOnSuccess.SetActive(true);
+            Debug.Log($"[场景A] 道具物体已激活：{showItemOnSuccess.name}");
+
             // 显示道具（如果未收集）
             itemHandler.CheckAndSetActive();
             Debug.Log($"[场景A] 道具已显示：{showItemOnSuccess.name}");
