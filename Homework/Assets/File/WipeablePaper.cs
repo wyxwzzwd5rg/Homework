@@ -7,26 +7,26 @@ using UnityEngine.Events;
 [RequireComponent(typeof(Collider2D))]
 public class WipeablePaper : MonoBehaviour
 {
-    [Header("Ö½ÕÅ×ÊÔ´")]
-    public Sprite dustyPaperSprite; // ´ø»Ò³¾µÄÖ½£¨³¡¾°ÖĞ¿Éµã»÷µÄÖ½ÕÅSprite£©
-    public Sprite cleanPaperSprite;  // ¸É¾»µÄÖ½£¨UIÖĞÏÔÊ¾µÄÎÆÀí£©
+    [Header("Ö½ï¿½ï¿½ï¿½ï¿½Ô´")]
+    public Sprite dustyPaperSprite; // ï¿½ï¿½ï¿½Ò³ï¿½ï¿½ï¿½Ö½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ğ¿Éµï¿½ï¿½ï¿½ï¿½Ö½ï¿½ï¿½Spriteï¿½ï¿½
+    public Sprite cleanPaperSprite;  // ï¿½É¾ï¿½ï¿½ï¿½Ö½ï¿½ï¿½UIï¿½ï¿½ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
-    [Header("UI ÒıÓÃ")]
-    public GameObject paperUI;       // µ¯´°Ãæ°å£¨ĞèÏú»Ù£©
-    public RawImage paperDisplay;    // ÏÔÊ¾Ö½ÕÅµÄRawImage
+    [Header("UI ï¿½ï¿½ï¿½ï¿½")]
+    public GameObject paperUI;       // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½å£¨ï¿½ï¿½ï¿½ï¿½ï¿½Ù£ï¿½
+    public RawImage paperDisplay;    // ï¿½ï¿½Ê¾Ö½ï¿½Åµï¿½RawImage
 
-    [Header("²ÁÊÃÉèÖÃ")]
-    public int baseWipeRadius = 500;  // »ù´¡²ÁÊÃ°ë¾¶
-    public float cleanThreshold = 0.8f; // Çå½à¶ÈãĞÖµ
+    [Header("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½")]
+    public int baseWipeRadius = 1500;  // å·²å¢å¤§æ¶‚æŠ¹èŒƒå›´ï¼Œæ¶‚æŠ¹æ›´å¿«  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã°ë¾¶
+    public float cleanThreshold = 0.8f; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
 
-    [Header("Ïú»ÙÉèÖÃ")]
-    public float delayAfterClean = 2.0f; // ²ÁÊÃÍê³ÉºóÍ£ÁôÊ±¼ä£¨Ãë£©
+    [Header("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½")]
+    public float delayAfterClean = 2.0f; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Éºï¿½Í£ï¿½ï¿½Ê±ï¿½ä£¨ï¿½ë£©
 
     private Texture2D workingTexture;
     private bool isCleaned = false;
     private bool isRevealed = false;
     private bool isUIOpen = false;
-    private float actualWipeRadius = 50f;
+    private float actualWipeRadius = 250f;  // åˆå§‹å€¼ï¼ˆå½“å‰çš„ä¸€åŠï¼‰
 
     void Start()
     {
@@ -36,7 +36,7 @@ public class WipeablePaper : MonoBehaviour
         BindDragEvent();
     }
 
-    // UI¼¤»îÊ±¼ÆËã²ÁÊÃ°ë¾¶
+    // UIï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã°ë¾¶
     void OnEnable()
     {
         if (paperDisplay != null && paperUI.activeSelf)
@@ -45,47 +45,54 @@ public class WipeablePaper : MonoBehaviour
         }
     }
 
-    // ¼ÆËãÊÊÅäUIµÄÊµ¼Ê²ÁÊÃ°ë¾¶
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½UIï¿½ï¿½Êµï¿½Ê²ï¿½ï¿½Ã°ë¾¶
     private void CalculateActualWipeRadius()
     {
-        if (paperDisplay == null || paperDisplay.rectTransform == null) return;
-        Vector2 screenSize = RectTransformUtility.WorldToScreenPoint(Camera.main, paperDisplay.rectTransform.position);
-        screenSize = paperDisplay.rectTransform.sizeDelta * paperDisplay.rectTransform.lossyScale;
-        if (screenSize.x > 0 && paperDisplay.rectTransform.rect.width > 0)
+        // ç®€åŒ–é€»è¾‘ï¼šç›´æ¥åŸºäºçº¹ç†å°ºå¯¸çš„ç™¾åˆ†æ¯”è®¡ç®—ï¼Œç¡®ä¿æ¶‚æŠ¹èŒƒå›´è¶³å¤Ÿå¤§
+        if (workingTexture != null)
         {
-            float scaleFactor = screenSize.x / paperDisplay.rectTransform.rect.width;
-            actualWipeRadius = baseWipeRadius * scaleFactor;
+            // ä½¿ç”¨çº¹ç†å®½åº¦çš„12.5%ä½œä¸ºæ¶‚æŠ¹åŠå¾„ï¼ˆå½“å‰çš„ä¸€åŠï¼‰
+            actualWipeRadius = Mathf.Max(workingTexture.width * 0.125f, workingTexture.height * 0.125f, 250f);
+            Debug.Log($"[çº¸å¼ æ¶‚æŠ¹] æ¶‚æŠ¹åŠå¾„å·²è®¾ç½®ä¸ºï¼š{actualWipeRadius}ï¼ˆçº¹ç†å°ºå¯¸ï¼š{workingTexture.width}x{workingTexture.height}ï¼‰");
+        }
+        else if (dustyPaperSprite != null && dustyPaperSprite.texture != null)
+        {
+            // å¦‚æœworkingTextureè¿˜æ²¡å‡†å¤‡å¥½ï¼Œä½¿ç”¨åŸå§‹spriteçš„å°ºå¯¸
+            actualWipeRadius = Mathf.Max(dustyPaperSprite.texture.width * 0.125f, dustyPaperSprite.texture.height * 0.125f, 250f);
+            Debug.Log($"[çº¸å¼ æ¶‚æŠ¹] æ¶‚æŠ¹åŠå¾„å·²è®¾ç½®ä¸ºï¼š{actualWipeRadius}ï¼ˆSpriteå°ºå¯¸ï¼š{dustyPaperSprite.texture.width}x{dustyPaperSprite.texture.height}ï¼‰");
         }
         else
         {
-            actualWipeRadius = baseWipeRadius;
+            // æœ€åçš„ä¿åº•å€¼
+            actualWipeRadius = 400f;
+            Debug.Log($"[çº¸å¼ æ¶‚æŠ¹] ä½¿ç”¨é»˜è®¤æ¶‚æŠ¹åŠå¾„ï¼š{actualWipeRadius}");
         }
     }
 
-    // ¼ì²é±ØÒªÒıÓÃ
+    // ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½
     private bool CheckReferences()
     {
         if (dustyPaperSprite == null || cleanPaperSprite == null || paperUI == null || paperDisplay == null)
         {
-            Debug.LogError("¡¾WipeablePaper¡¿ÇëÎªËùÓĞ¹«¹²±äÁ¿¸³Öµ£¡");
+            Debug.LogError("ï¿½ï¿½WipeablePaperï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½Ğ¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½");
             enabled = false;
             return false;
         }
         if (dustyPaperSprite.texture.width != cleanPaperSprite.texture.width || dustyPaperSprite.texture.height != cleanPaperSprite.texture.height)
         {
-            Debug.LogError("¡¾WipeablePaper¡¿´ø»Ò³¾µÄÖ½ºÍ¸É¾»µÄÖ½ÎÆÀí³ß´ç±ØĞëÒ»ÖÂ£¡");
+            Debug.LogError("ï¿½ï¿½WipeablePaperï¿½ï¿½ï¿½ï¿½ï¿½Ò³ï¿½ï¿½ï¿½Ö½ï¿½Í¸É¾ï¿½ï¿½ï¿½Ö½ï¿½ï¿½ï¿½ï¿½ï¿½ß´ï¿½ï¿½ï¿½ï¿½Ò»ï¿½Â£ï¿½");
             enabled = false;
             return false;
         }
         return true;
     }
 
-    // ×¼±¸²ÁÊÃÓÃÎÆÀí
+    // ×¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     private void PrepareWorkingTexture()
     {
         if (!dustyPaperSprite.texture.isReadable)
         {
-            Debug.LogError($"¡¾WipeablePaper¡¿Çë¹´Ñ¡ {dustyPaperSprite.name} µÄ 'Read/Write Enabled'£¡");
+            Debug.LogError($"ï¿½ï¿½WipeablePaperï¿½ï¿½ï¿½ë¹´Ñ¡ {dustyPaperSprite.name} ï¿½ï¿½ 'Read/Write Enabled'ï¿½ï¿½");
             return;
         }
         if (workingTexture != null) Destroy(workingTexture);
@@ -96,7 +103,7 @@ public class WipeablePaper : MonoBehaviour
         isCleaned = false;
     }
 
-    // °ó¶¨ÍÏ×§²ÁÊÃÊÂ¼ş
+    // ï¿½ï¿½ï¿½ï¿½×§ï¿½ï¿½ï¿½ï¿½ï¿½Â¼ï¿½
     private void BindDragEvent()
     {
         EventTrigger eventTrigger = paperDisplay.GetComponent<EventTrigger>();
@@ -108,7 +115,7 @@ public class WipeablePaper : MonoBehaviour
         eventTrigger.triggers.Add(dragEntry);
     }
 
-    // µã»÷³¡¾°ÖĞµÄpaper´ò¿ªUI
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ğµï¿½paperï¿½ï¿½UI
     private void OnMouseDown()
     {
         if (!isUIOpen && EventSystem.current.currentSelectedGameObject == null)
@@ -120,7 +127,7 @@ public class WipeablePaper : MonoBehaviour
         }
     }
 
-    // ÍÏ×§²ÁÊÃÂß¼­
+    // ï¿½ï¿½×§ï¿½ï¿½ï¿½ï¿½ï¿½ß¼ï¿½
     private void OnPaperDrag(BaseEventData eventData)
     {
         if (isCleaned || isRevealed || workingTexture == null) return;
@@ -140,32 +147,32 @@ public class WipeablePaper : MonoBehaviour
 
         WipeAtPixel(pixelX, pixelY, Mathf.RoundToInt(actualWipeRadius));
 
-        // ²ÁÊÃÍê³Éºó´¥·¢Ïú»ÙÂß¼­
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Éºó´¥·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß¼ï¿½
         if (!isCleaned && CheckIfCleaned())
         {
             isCleaned = true;
             isRevealed = true;
             paperDisplay.texture = cleanPaperSprite.texture;
-            Debug.Log($"¡¾WipeablePaper¡¿Ö½ÕÅ²ÁÊÃÍê³É£¡½«ÔÚ {delayAfterClean} ÃëºóÏú»ÙUIºÍÖ½ÕÅÎïÌå¡£");
+            Debug.Log($"ï¿½ï¿½WipeablePaperï¿½ï¿½Ö½ï¿½Å²ï¿½ï¿½ï¿½ï¿½ï¿½É£ï¿½ï¿½ï¿½ï¿½ï¿½ {delayAfterClean} ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½UIï¿½ï¿½Ö½ï¿½ï¿½ï¿½ï¿½ï¿½å¡£");
 
-            // Æô¶¯Ğ­³Ì£ºÑÓ³ÙºóÏú»Ù
+            // ï¿½ï¿½ï¿½ï¿½Ğ­ï¿½Ì£ï¿½ï¿½Ó³Ùºï¿½ï¿½ï¿½ï¿½ï¿½
             StartCoroutine(DestroyAfterDelay(delayAfterClean));
         }
     }
 
-    // Ğ­³Ì£ºÑÓ³ÙºóÏú»ÙpaperUIºÍ³¡¾°ÖĞµÄpaperÎïÌå
+    // Ğ­ï¿½Ì£ï¿½ï¿½Ó³Ùºï¿½ï¿½ï¿½ï¿½ï¿½paperUIï¿½Í³ï¿½ï¿½ï¿½ï¿½Ğµï¿½paperï¿½ï¿½ï¿½ï¿½
     private IEnumerator DestroyAfterDelay(float delay)
     {
-        yield return new WaitForSeconds(delay); // Í£ÁôÖ¸¶¨ÃëÊı
+        yield return new WaitForSeconds(delay); // Í£ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
-        // Ïú»ÙUIºÍ³¡¾°ÖĞµÄÖ½ÕÅÎïÌå£¨this.gameObject ¾ÍÊÇ¹ÒÔØ½Å±¾µÄpaperÎïÌå£©
+        // ï¿½ï¿½ï¿½ï¿½UIï¿½Í³ï¿½ï¿½ï¿½ï¿½Ğµï¿½Ö½ï¿½ï¿½ï¿½ï¿½ï¿½å£¨this.gameObject ï¿½ï¿½ï¿½Ç¹ï¿½ï¿½Ø½Å±ï¿½ï¿½ï¿½paperï¿½ï¿½ï¿½å£©
         if (paperUI != null) Destroy(paperUI);
-        Destroy(gameObject); // Ïú»Ù³¡¾°ÖĞ¿Éµã»÷µÄÖ½ÕÅ
+        Destroy(gameObject); // ï¿½ï¿½ï¿½Ù³ï¿½ï¿½ï¿½ï¿½Ğ¿Éµï¿½ï¿½ï¿½ï¿½Ö½ï¿½ï¿½
 
-        Debug.Log("¡¾WipeablePaper¡¿UIºÍÖ½ÕÅÎïÌåÒÑÏú»Ù£¡");
+        Debug.Log("ï¿½ï¿½WipeablePaperï¿½ï¿½UIï¿½ï¿½Ö½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù£ï¿½");
     }
 
-    // ÏñËØ²ÁÊÃÂß¼­
+    // ï¿½ï¿½ï¿½Ø²ï¿½ï¿½ï¿½ï¿½ß¼ï¿½
     private void WipeAtPixel(int centerX, int centerY, int radius)
     {
         Color[] cleanPixels = cleanPaperSprite.texture.GetPixels();
@@ -187,7 +194,7 @@ public class WipeablePaper : MonoBehaviour
         workingTexture.Apply();
     }
 
-    // ¼ì²éÊÇ·ñ²Á¸É¾»
+    // ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½É¾ï¿½
     private bool CheckIfCleaned()
     {
         Color[] workingPixels = workingTexture.GetPixels();
@@ -201,13 +208,13 @@ public class WipeablePaper : MonoBehaviour
         return (float)matched / (workingPixels.Length / step) >= cleanThreshold;
     }
 
-    // ¼ÆËãÑÕÉ«ÏàËÆ¶È
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½ï¿½Æ¶ï¿½
     private float ColorDistance(Color a, Color b)
     {
         return Mathf.Sqrt(Mathf.Pow(a.r - b.r, 2) + Mathf.Pow(a.g - b.g, 2) + Mathf.Pow(a.b - b.b, 2) + Mathf.Pow(a.a - b.a, 2));
     }
 
-    // ÖØÖÃ¹¦ÄÜ£¨²âÊÔÓÃ£¬ÎïÌåÏú»ÙºóÎŞĞ§£©
+    // ï¿½ï¿½ï¿½Ã¹ï¿½ï¿½Ü£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ùºï¿½ï¿½ï¿½Ğ§ï¿½ï¿½
     public void ResetPaper()
     {
         isCleaned = false;
