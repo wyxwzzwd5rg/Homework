@@ -7,14 +7,14 @@ public class InteractableObject : MonoBehaviour
     public GameObject springSprite; // 新增：拖入场景中的弹簧Sprite（平级对象）
     [Tooltip("如果为true，始终允许交互；否则需被激活（用于布谷鸟等逻辑）")]
     public bool alwaysActive = false;
-    
+
     // 用于调试：检查组件是否正确设置
     void Start()
     {
         // 检查是否有 Collider（OnMouseDown 需要 Collider 才能工作）
         Collider2D col2D = GetComponent<Collider2D>();
         Collider col3D = GetComponent<Collider>();
-        
+
         if (col2D == null && col3D == null)
         {
             Debug.LogError($"[交互对象检查] {gameObject.name} 缺少 Collider 或 Collider2D 组件！OnMouseDown 无法工作。请添加 BoxCollider2D 或 Collider。");
@@ -30,9 +30,9 @@ public class InteractableObject : MonoBehaviour
                 Debug.Log($"[交互对象检查] {gameObject.name} 有 Collider，IsTrigger={col3D.isTrigger}，Enabled={col3D.enabled}");
             }
         }
-        
+
         Debug.Log($"[交互对象检查] {gameObject.name} - objectTag={objectTag}，alwaysActive={alwaysActive}");
-        
+
         // 场景A：确保showItemOnSuccess物体初始隐藏（如果未收集）
         if (showItemOnSuccess != null)
         {
@@ -85,9 +85,9 @@ public class InteractableObject : MonoBehaviour
     void OnMouseDown()
     {
         Debug.Log($"[点击检测] {gameObject.name} 被点击了！");
-        
+
         // 检查是否点击到了UI元素（但允许背包等小窗口UI，只阻止全屏UI）
-        if (UnityEngine.EventSystems.EventSystem.current != null && 
+        if (UnityEngine.EventSystems.EventSystem.current != null &&
             UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
         {
             // 获取点击到的UI对象
@@ -95,18 +95,18 @@ public class InteractableObject : MonoBehaviour
             pointerData.position = Input.mousePosition;
             var results = new System.Collections.Generic.List<UnityEngine.EventSystems.RaycastResult>();
             UnityEngine.EventSystems.EventSystem.current.RaycastAll(pointerData, results);
-            
+
             // 检查是否点击到了全屏UI（比如密码面板、放大UI等）
             bool isBlockingUI = false;
             foreach (var result in results)
             {
                 // 如果点击到的是Canvas根节点或全屏面板，则阻止交互
-                if (result.gameObject.name.Contains("Panel") || 
+                if (result.gameObject.name.Contains("Panel") ||
                     result.gameObject.name.Contains("Canvas") ||
                     result.gameObject.GetComponent<Canvas>() != null)
                 {
                     // 检查是否是背包UI（背包UI应该允许交互继续）
-                    if (!result.gameObject.name.Contains("Backpack") && 
+                    if (!result.gameObject.name.Contains("Backpack") &&
                         !result.gameObject.name.Contains("ItemSlot"))
                     {
                         isBlockingUI = true;
@@ -115,7 +115,7 @@ public class InteractableObject : MonoBehaviour
                     }
                 }
             }
-            
+
             if (isBlockingUI)
             {
                 return;
@@ -132,7 +132,7 @@ public class InteractableObject : MonoBehaviour
             Debug.LogError($"[点击检测] 交互对象未激活，不执行交互。物体名={gameObject.name}");
             return;
         }
-        
+
         Debug.Log($"[点击检测] 开始触发交互，物体名={gameObject.name}，objectTag={objectTag}");
         TriggerInteract(); // 调用新增的方法
     }
@@ -141,13 +141,13 @@ public class InteractableObject : MonoBehaviour
     public void TriggerInteract()
     {
         Debug.Log($"[交互触发] 开始交互，对象Tag={objectTag}，物体名={gameObject.name}");
-        
+
         if (BackpackManager.Instance == null)
         {
             Debug.LogError("[交互触发] 找不到BackpackManager实例!请确保场景中有BackpackManager物体。");
             return;
         }
-        
+
         Debug.Log($"[交互触发] 调用背包交互方法，对象Tag={objectTag}");
         BackpackManager.Instance.OnInteractWithObject(objectTag, this);
     }
@@ -170,11 +170,11 @@ public class InteractableObject : MonoBehaviour
         Debug.Log($"[交互成功] autoHideOnSuccess={autoHideOnSuccess}");
         Debug.Log($"[交互成功] unlockDrawersOnSuccess={unlockDrawersOnSuccess}");
         Debug.Log($"[交互成功] showObjectOnSuccess={(showObjectOnSuccess != null ? showObjectOnSuccess.name : "null")}");
-        
+
         // 先触发Inspector中绑定的事件
         onInteractSuccess?.Invoke();
         Debug.Log($"[交互成功] 已触发Inspector绑定的事件");
-        
+
         // 如果设置了自动隐藏，则隐藏自己（用于藤蔓等物体）
         if (autoHideOnSuccess)
         {
@@ -199,11 +199,11 @@ public class InteractableObject : MonoBehaviour
         }
 
         // 场景A：如果设置了解锁抽屉，则解锁所有抽屉（用于镜片+藤蔓交互）
-        if (unlockDrawersOnSuccess)
-        {
-            Debug.Log($"[交互成功] 开始解锁抽屉");
-            UnlockAllDrawers();
-        }
+        // if (unlockDrawersOnSuccess)
+        // {
+        //     Debug.Log($"[交互成功] 开始解锁抽屉");
+        //     UnlockAllDrawers();
+        // }
 
         // 场景A：如果设置了显示道具，则显示道具（用于小刀+人物、溶解剂+油画等交互）
         if (showItemOnSuccess != null)
@@ -229,30 +229,30 @@ public class InteractableObject : MonoBehaviour
             hideObjectOnSuccess.SetActive(false);
             Debug.Log($"[场景A] 物体已隐藏：{hideObjectOnSuccess.name}");
         }
-        
+
         Debug.Log($"[交互成功] 交互成功事件执行完成");
     }
 
     // 解锁所有抽屉（场景A：镜片+藤蔓交互时调用）
-    private void UnlockAllDrawers()
-    {
-        // 记录藤蔓已清除（用于解锁抽屉，让柜子可以点击）
-        GameData.AddCollectedItem("vine_cleared");
-        Debug.Log($"[场景A] 已记录藤蔓清除：vine_cleared");
+    // private void UnlockAllDrawers()
+    // {
+    //     // 记录藤蔓已清除（用于解锁抽屉，让柜子可以点击）
+    //     GameData.AddCollectedItem("vine_cleared");
+    //     Debug.Log($"[场景A] 已记录藤蔓清除：vine_cleared");
 
-        // 解锁所有抽屉（让柜子可以点击打开）
-        DrawerController[] allDrawers = FindObjectsOfType<DrawerController>();
-        foreach (var drawer in allDrawers)
-        {
-            if (drawer != null)
-            {
-                drawer.CheckUnlockStatus();
-                Debug.Log($"[场景A] 抽屉已解锁：{drawer.gameObject.name}");
-            }
-        }
+    //     // 解锁所有抽屉（让柜子可以点击打开）
+    //     DrawerController[] allDrawers = FindObjectsOfType<DrawerController>();
+    //     foreach (var drawer in allDrawers)
+    //     {
+    //         if (drawer != null)
+    //         {
+    //             drawer.CheckUnlockStatus();
+    //             Debug.Log($"[场景A] 抽屉已解锁：{drawer.gameObject.name}");
+    //         }
+    //     }
 
-        Debug.Log($"[场景A] 镜片切开藤蔓，柜子已显露，可以点击打开！");
-    }
+    //     Debug.Log($"[场景A] 镜片切开藤蔓，柜子已显露，可以点击打开！");
+    // }
 
     // 显示道具物体（场景A：小刀+人物、溶解剂+油画等交互时调用）
     private void ShowItemObject()
@@ -278,7 +278,7 @@ public class InteractableObject : MonoBehaviour
             // 显示道具（如果未收集）
             itemHandler.CheckAndSetActive();
             Debug.Log($"[场景A] 道具已显示：{showItemOnSuccess.name}");
-            
+
             // 确保道具可见且可点击（类似SafeLockController的逻辑）
             EnsureItemVisibleAndClickable(showItemOnSuccess, itemHandler);
         }
@@ -287,7 +287,7 @@ public class InteractableObject : MonoBehaviour
             Debug.LogError($"[场景A] 道具物体缺少ItemClickHandler组件！");
         }
     }
-    
+
     // 确保道具可见且可点击
     private void EnsureItemVisibleAndClickable(GameObject itemObj, ItemClickHandler itemHandler)
     {
@@ -327,7 +327,7 @@ public class InteractableObject : MonoBehaviour
 
         // 4. 确保位置正确
         itemObj.transform.position = new Vector3(itemObj.transform.position.x, itemObj.transform.position.y, 0);
-        
+
         Debug.Log($"[场景A] ✓ 道具已确保可见且可点击：{itemObj.name}");
     }
 }
