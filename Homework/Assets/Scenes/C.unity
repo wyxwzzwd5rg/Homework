@@ -134,8 +134,8 @@ GameObject:
   - component: {fileID: 3534016}
   - component: {fileID: 3534020}
   - component: {fileID: 3534019}
+  - component: {fileID: 3534021}
   - component: {fileID: 3534018}
-  - component: {fileID: 3534017}
   m_Layer: 0
   m_Name: Btn_Back
   m_TagString: Untagged
@@ -162,18 +162,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: -323}
   m_SizeDelta: {x: 35.19, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &3534017
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3534015}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 596e7a97fe3f3c848a3a463e21ffa766, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &3534018
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -218,9 +206,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 3534017}
-        m_TargetAssemblyTypeName: BackToMainScene, Assembly-CSharp
-        m_MethodName: OnClick
+      - m_Target: {fileID: 3534021}
+        m_TargetAssemblyTypeName: ExitPuzzleReturnBtn, Assembly-CSharp
+        m_MethodName: SwitchCameraState
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -268,6 +256,21 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3534015}
   m_CullTransparentMesh: 1
+--- !u!114 &3534021
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3534015}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89e31a0b9c272a9489fe401e07a98722, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetActiveCamera: {fileID: 464090433}
+  targetDisableCamera: {fileID: 34820898}
+  returnButton: {fileID: 0}
 --- !u!1 &24174306
 GameObject:
   m_ObjectHideFlags: 0
@@ -2171,6 +2174,7 @@ GameObject:
   - component: {fileID: 511225582}
   - component: {fileID: 511225581}
   - component: {fileID: 511225580}
+  - component: {fileID: 511225583}
   - component: {fileID: 511225579}
   - component: {fileID: 511225578}
   m_Layer: 0
@@ -2278,6 +2282,18 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!114 &511225583
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 511225577}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b3d19eb1d69bdd4c86dac7be8c294a3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &532507904
 GameObject:
   m_ObjectHideFlags: 0
@@ -3911,7 +3927,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f6ed99d72017ad41bd382b93255fb7c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Camera2: {fileID: 1424909887}
+  Camera3: {fileID: 0}
   cabinetCamera: {fileID: 675309497}
 --- !u!212 &872206058
 SpriteRenderer:
@@ -6568,7 +6584,7 @@ GameObject:
   - component: {fileID: 1443834385}
   - component: {fileID: 1443834388}
   - component: {fileID: 1443834387}
-  - component: {fileID: 1443834386}
+  - component: {fileID: 1443834390}
   - component: {fileID: 1443834389}
   m_Layer: 0
   m_Name: anniu (2)
@@ -6592,20 +6608,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1230816062}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 180}
---- !u!114 &1443834386
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1443834384}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8f6ed99d72017ad41bd382b93255fb7c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Camera2: {fileID: 2064431963}
-  cabinetCamera: {fileID: 1555919545}
 --- !u!61 &1443834387
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -6747,9 +6749,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 506440437}
-        m_TargetAssemblyTypeName: ViewManager, Assembly-CSharp
-        m_MethodName: ExitCloseUpView
+      - m_Target: {fileID: 1443834390}
+        m_TargetAssemblyTypeName: ExitClockReturnBtn, Assembly-CSharp
+        m_MethodName: SwitchCameraState
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -6759,6 +6761,21 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+--- !u!114 &1443834390
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1443834384}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b5c10fbf0590e64f8a686d782734097, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetActiveCamera: {fileID: 1555919545}
+  targetDisableCamera: {fileID: 2064431963}
+  returnButton: {fileID: 0}
 --- !u!1 &1446079762
 GameObject:
   m_ObjectHideFlags: 0
@@ -7076,7 +7093,7 @@ GameObject:
   - component: {fileID: 1458377990}
   - component: {fileID: 1458377994}
   - component: {fileID: 1458377993}
-  - component: {fileID: 1458377992}
+  - component: {fileID: 1458377995}
   - component: {fileID: 1458377991}
   m_Layer: 0
   m_Name: anniu (1)
@@ -7144,9 +7161,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 506440437}
-        m_TargetAssemblyTypeName: ViewManager, Assembly-CSharp
-        m_MethodName: ExitCloseUpView
+      - m_Target: {fileID: 1458377995}
+        m_TargetAssemblyTypeName: ExitDrawersReturnBtn, Assembly-CSharp
+        m_MethodName: SwitchCameraState
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -7156,20 +7173,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
---- !u!114 &1458377992
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1458377989}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8f6ed99d72017ad41bd382b93255fb7c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Camera2: {fileID: 374395084}
-  cabinetCamera: {fileID: 1555919545}
 --- !u!61 &1458377993
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -7267,6 +7270,21 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &1458377995
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1458377989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b7e7679433e10543b8221583b3e3b8d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetActiveCamera: {fileID: 1555919545}
+  targetDisableCamera: {fileID: 374395084}
+  returnButton: {fileID: 0}
 --- !u!1 &1497727526
 GameObject:
   m_ObjectHideFlags: 0
@@ -8394,7 +8412,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f6ed99d72017ad41bd382b93255fb7c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Camera2: {fileID: 1555919545}
+  Camera3: {fileID: 1555919545}
   cabinetCamera: {fileID: 374395084}
 --- !u!212 &1613382543
 SpriteRenderer:
@@ -9337,7 +9355,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f6ed99d72017ad41bd382b93255fb7c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Camera2: {fileID: 675309497}
+  Camera3: {fileID: 0}
   cabinetCamera: {fileID: 1424909887}
 --- !u!61 &1825458062
 BoxCollider2D:

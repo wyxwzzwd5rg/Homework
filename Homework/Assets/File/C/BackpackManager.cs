@@ -159,7 +159,7 @@ public class BackpackManager : MonoBehaviour
             slot.enabled = true;
 
             // 打印关键信息
-            Debug.Log($"[背包调试] 第{i}个ItemSlot：激活状态={slot.gameObject.activeSelf}，Image启用={slot.enabled}，尺寸={slot.rectTransform.sizeDelta}，位置={slot.rectTransform.anchoredPosition}，Sprite={slot.sprite?.name ?? "无"}");
+            // Debug.Log($"[背包调试] 第{i}个ItemSlot：激活状态={slot.gameObject.activeSelf}，Image启用={slot.enabled}，尺寸={slot.rectTransform.sizeDelta}，位置={slot.rectTransform.anchoredPosition}，Sprite={slot.sprite?.name ?? "无"}");
         }
 
         // 原有逻辑：显示收集的物品

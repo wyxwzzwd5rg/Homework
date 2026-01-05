@@ -10,26 +10,7 @@ public class ViewManager : MonoBehaviour
     public Canvas clockCanvas;     // 时钟特写的 Canvas (ClockCanvas)
     public Canvas puzzleCanvas;
     public Canvas clockV1Canvas;
-    // void Start()
-    // {
-    //     // 临时测试代码，在游戏开始5秒后执行
-    //     Invoke("TestEnterCabinetView", 5f);
-    //     Invoke("TestEnterClockView", 10f);
-    // }
 
-    // // 测试进入柜子视角
-    // void TestEnterCabinetView()
-    // {
-    //     Debug.LogError("### 临时测试：调用 EnterCabinetView ###");
-    //     EnterCabinetView();
-    // }
-
-    // // 测试进入时钟视角
-    // void TestEnterClockView()
-    // {
-    //     Debug.LogError("### 临时测试：调用 EnterClockView ###");
-    //     EnterClockView();
-    // }
     private void Awake()
     {
         if (Instance == null)
@@ -42,7 +23,65 @@ public class ViewManager : MonoBehaviour
             Destroy(gameObject);
         }
     }
+    public void ExitPuzzleView()
+    {
+        // 安全校验：避免空引用异常
+        if (puzzleCanvas != null)
+        {
+            puzzleCanvas.gameObject.SetActive(false);
+            Debug.Log("[ViewManager] 退出华容道视角：已隐藏PuzzleCanvas");
+        }
+        else
+        {
+            Debug.LogWarning("[ViewManager] PuzzleCanvas未赋值，请在Inspector面板绑定！");
+        }
 
+        // 可选：确保其他特写Canvas也保持隐藏（防止冲突）
+        EnsureOtherCanvasHidden();
+    }
+    public void ExitClockView()
+    {
+        if (clockCanvas != null)
+        {
+            clockCanvas.gameObject.SetActive(false);
+            Debug.Log("[ViewManager] 退出时钟视角：已隐藏ClockCanvas");
+        }
+        else
+        {
+            Debug.LogWarning("[ViewManager] ClockCanvas未赋值，请在Inspector面板绑定！");
+        }
+
+        EnsureOtherCanvasHidden();
+    }
+    public void ExitDrawersView()
+    {
+        if (drawersCanvas != null)
+        {
+            drawersCanvas.gameObject.SetActive(false);
+            Debug.Log("[ViewManager] 退出柜子视角：已隐藏DrawersCanvas");
+        }
+        else
+        {
+            Debug.LogWarning("[ViewManager] DrawersCanvas未赋值，请在Inspector面板绑定！");
+        }
+
+        EnsureOtherCanvasHidden();
+    }
+    private void EnsureOtherCanvasHidden()
+    {
+        if (clockCanvas != null && clockCanvas.gameObject.activeSelf)
+        {
+            clockCanvas.gameObject.SetActive(false);
+        }
+        if (drawersCanvas != null && drawersCanvas.gameObject.activeSelf)
+        {
+            drawersCanvas.gameObject.SetActive(false);
+        }
+        if (clockV1Canvas != null && clockV1Canvas.gameObject.activeSelf)
+        {
+            clockV1Canvas.gameObject.SetActive(false);
+        }
+    }
     // 进入柜子特写视角：激活 DrawersCanvas，禁用 ClockCanvas
     public void EnterCabinetView()
     {
