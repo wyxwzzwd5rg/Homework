@@ -5,6 +5,9 @@ using System.Collections.Generic;
 // 背包管理器：单例模式（整个游戏只有一个实例，跨场景不销毁）
 public class BackpackManager : MonoBehaviour
 {
+    [Header("背包UI配置")]
+    public Canvas backpackCanvas;
+
     [Header("当前选中状态")]
     public int selectedSlotIndex = -1; // 当前选中的背包槽索引（-1表示未选中）
     [System.NonSerialized] // 防止Unity序列化，避免Inspector报错
@@ -34,16 +37,20 @@ public class BackpackManager : MonoBehaviour
         {
             Destroy(gameObject); // 若已有实例，销毁重复的
         }
+        backpackCanvas = GetComponent<Canvas>();
+        // 强制设置为全局最高层级
+        backpackCanvas.sortingOrder = 999;
+        backpackCanvas.overrideSorting = true;
         // 额外检查：确保物品槽在场景切换后仍有效
         UpdateBackpackUI();
     }
-    
+
     void Start()
     {
         // 自动绑定背包槽位的点击事件（修复Target为空的问题）
         AutoBindSlotButtons();
     }
-    
+
     // 自动绑定背包槽位的点击事件
     private void AutoBindSlotButtons()
     {
@@ -52,12 +59,12 @@ public class BackpackManager : MonoBehaviour
             Debug.LogWarning("[背包绑定] itemSlots列表为空，无法自动绑定");
             return;
         }
-        
+
         int boundCount = 0;
         for (int i = 0; i < itemSlots.Count; i++)
         {
             if (itemSlots[i] == null) continue;
-            
+
             // 获取Button组件（可能在Image的父物体上）
             Button btn = itemSlots[i].GetComponent<Button>();
             if (btn == null)
@@ -65,7 +72,7 @@ public class BackpackManager : MonoBehaviour
                 // 如果Image本身没有Button，检查父物体
                 btn = itemSlots[i].transform.parent?.GetComponent<Button>();
             }
-            
+
             if (btn != null)
             {
                 // 清空原有事件
@@ -77,7 +84,7 @@ public class BackpackManager : MonoBehaviour
                 Debug.Log($"[背包绑定] ✓ 已绑定槽位{i}的Button到OnSlotClicked({i})");
             }
         }
-        
+
         Debug.Log($"[背包绑定] 完成：共绑定{boundCount}个槽位");
     }
 
@@ -95,11 +102,18 @@ public class BackpackManager : MonoBehaviour
         collectedItems.Add(itemSprite);
         // 更新背包UI显示
         UpdateBackpackUI();
-        
+
         // 不自动选中，需要用户手动在背包中点击槽位才能选中
         Debug.Log($"[收集物品] 已收集物品：{itemSprite.name}，请在背包中点击槽位选中该物品");
     }
-
+    public void RefreshBackpackLayer()
+    {
+        if (backpackCanvas != null)
+        {
+            backpackCanvas.sortingOrder = 999;
+            Debug.Log("背包UI层级已强制设为999");
+        }
+    }
     // 更新背包UI：将收集的物品显示到物品槽中
     // private void UpdateBackpackUI()
     // {
@@ -186,7 +200,7 @@ public class BackpackManager : MonoBehaviour
         Debug.Log($"[背包选中] 槽位索引：{slotIndex}");
         Debug.Log($"[背包选中] 背包物品数量：{collectedItems.Count}");
         Debug.Log($"[背包选中] 当前selectedItem：{(selectedItem != null ? selectedItem.name : "null")}");
-        
+
         // 1. 验证槽位索引是否有效
         if (slotIndex < 0)
         {
@@ -195,7 +209,7 @@ public class BackpackManager : MonoBehaviour
             selectedSlotIndex = -1;
             return;
         }
-        
+
         if (collectedItems.Count == 0)
         {
             Debug.LogError($"[背包选中] ✗ 背包为空，没有物品可选中");
@@ -203,7 +217,7 @@ public class BackpackManager : MonoBehaviour
             selectedSlotIndex = -1;
             return;
         }
-        
+
         if (slotIndex >= collectedItems.Count)
         {
             Debug.LogError($"[背包选中] ✗ 槽位索引超出范围：{slotIndex}，背包物品数量：{collectedItems.Count}");
@@ -229,7 +243,7 @@ public class BackpackManager : MonoBehaviour
         Debug.Log($"[背包选中] ✓ 选中物品：{selectedItem.name}，槽位索引：{slotIndex}");
         Debug.Log($"[背包选中] ✓ selectedItem已设置，现在可以点击场景中的交互对象");
     }
-    
+
     // 测试方法：用于检查背包状态
     [ContextMenu("测试：打印背包状态")]
     public void TestPrintBackpackState()
@@ -250,7 +264,7 @@ public class BackpackManager : MonoBehaviour
         Debug.Log($"[交互调试] ========== OnInteractWithObject 被调用 ==========");
         Debug.Log($"[交互调试] objectTag={objectTag}");
         Debug.Log($"[交互调试] selectedSlotIndex={selectedSlotIndex}");
-        
+
         // 先检查是否有选中物品（在访问name之前）
         if (selectedItem == null)
         {
@@ -354,10 +368,10 @@ public class BackpackManager : MonoBehaviour
                 Debug.LogWarning($"[交互调试]   - fangdajing_Artwork（放大镜+艺术品）");
                 Debug.LogWarning($"[交互调试]   - rongjieji_PaintingBase（溶解剂+油画）");
                 Debug.LogWarning($"[交互调试] 请检查：1)物品Sprite名字是否正确 2)交互对象的objectTag是否正确");
-                
+
                 // 明确拒绝不匹配的交互（防止油画和放大镜交互等错误情况）
                 Debug.LogWarning($"[交互调试] ✗ 交互被拒绝：{itemName} 不能与 {objectTag} 交互");
-                
+
                 // 特殊检查：如果油画（PaintingBase）被放大镜点击，明确拒绝
                 if (objectTag == "PaintingBase" && itemName == "fangdajing")
                 {
@@ -370,7 +384,7 @@ public class BackpackManager : MonoBehaviour
                     Debug.LogError($"[交互错误] ✗ 艺术品（Artwork）只能与放大镜交互，不能与溶解剂交互！");
                     Debug.LogError($"[交互错误] 请使用放大镜（fangdajing）与艺术品交互。");
                 }
-                
+
                 // 不触发任何交互，直接返回
                 return;
         }

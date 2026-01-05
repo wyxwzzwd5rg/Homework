@@ -10,7 +10,8 @@ public class ClockManager : MonoBehaviour
     // public GameObject cuckooBird; // 拖入布谷鸟对象
     // public GameObject secretCompartment; // 拖入暗格对象
     // 替换：删除原VideoPlayer变量，新增MediaPlayer变量
-
+    public Canvas targetClockCanvas1; // 绑定ClockCanvas(1)
+    public Camera targetClockCamera1; // 绑定ClockCamera（1）
     public GameObject videoCanvas; // 拖入VideoCanvas
     public VideoPlayer nativeVideoPlayer;  // 拖入VideoPlayerRawImage上的MediaPlayer组件
     public float correctHourAngle = 210f; // 9点对应的角度（从12点顺时针转270度）
@@ -78,24 +79,19 @@ public class ClockManager : MonoBehaviour
         }
     }
 
-    // 关键修改3：新增视频播放结束回调（原生VideoPlayer事件）
     private void OnVideoFinished(VideoPlayer vp)
     {
-        // 1. 恢复画布：隐藏Video1Canvas，显示原时钟画布
+        // 1. 切换画布：隐藏视频画布，激活目标ClockCanvas1
         videoCanvas.SetActive(false);
-        originalClockCanvas.SetActive(true);
+        targetClockCanvas1.gameObject.SetActive(true);
 
-        // 2. 恢复相机：关闭Video1Camera，激活原时钟相机
+        // 2. 切换相机：关闭视频相机，激活目标ClockCamera1
         clockV1Camera.gameObject.SetActive(false);
-        Camera originalCamera = originalClockCanvas.GetComponentInParent<Camera>();
-        if (originalCamera != null)
-        {
-            originalCamera.gameObject.SetActive(true);
-        }
-
-        // 3. 移除事件监听（避免重复调用）
+        targetClockCamera1.gameObject.SetActive(true);
+        BackpackManager.Instance?.RefreshBackpackLayer();
+        // 3. 移除事件监听
         nativeVideoPlayer.loopPointReached -= OnVideoFinished;
-        Debug.Log("视频播放结束，恢复原时钟界面");
+        Debug.Log("视频播放结束，已跳转到ClockCanvas(1)与ClockCamera（1）");
     }
 }
 // 打开暗格（示例：向上移动暗格）
