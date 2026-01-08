@@ -106,6 +106,26 @@ public class BackpackManager : MonoBehaviour
         // 不自动选中，需要用户手动在背包中点击槽位才能选中
         Debug.Log($"[收集物品] 已收集物品：{itemSprite.name}，请在背包中点击槽位选中该物品");
     }
+    // BackpackManager.cs中新增方法（CollectItem下方）
+    /// <summary>
+    /// 收集弹簧物品（供ClockManager调用）
+    /// </summary>
+    /// <param name="springSprite">弹簧的Sprite</param>
+    // BackpackManager.cs - CollectSpring 方法补充
+    public void CollectSpring(Sprite springSprite)
+    {
+        // 修复：先检查是否重复收集弹簧
+        if (collectedItems.Contains(springSprite))
+        {
+            Debug.Log($"[收集弹簧] 已收集过该弹簧：{springSprite.name}，无需重复收集");
+            return;
+        }
+
+        CollectItem(springSprite);
+        // 修复：移除重复的UpdateBackpackUI调用（CollectItem内部已调用），改为强制刷新层级
+        RefreshBackpackLayer();
+        Debug.Log($"[收集弹簧] 弹簧已添加到背包：{springSprite.name}");
+    }
     public void RefreshBackpackLayer()
     {
         if (backpackCanvas != null)
@@ -114,39 +134,8 @@ public class BackpackManager : MonoBehaviour
             Debug.Log("背包UI层级已强制设为999");
         }
     }
+
     // 更新背包UI：将收集的物品显示到物品槽中
-    // private void UpdateBackpackUI()
-    // {
-    //     if (itemSlots == null || itemSlots.Count == 0)
-    //     {
-    //         Debug.LogError("物品槽列表为空，请检查关联！");
-    //         return;
-    //     }
-    //     // 先清空所有物品槽
-    //     foreach (var slot in itemSlots)
-    //     {
-
-    //         slot.sprite = null; // 清空图片
-    //         slot.enabled = true;
-    //         slot.sprite = emptySlotSprite;
-    //     }
-
-    //     // 显示收集的物品
-    //     for (int i = 0; i < collectedItems.Count; i++)
-    //     {
-    //         if (i < itemSlots.Count) // 避免超出物品槽数量
-    //         {
-    //             itemSlots[i].sprite = collectedItems[i]; // 给槽赋值物品图片
-
-    //         }
-    //         else
-    //         {
-    //             Debug.Log("背包已满！");
-    //             break;
-    //         }
-    //     }
-    // }
-
     private void UpdateBackpackUI()
     {
         // 调试1：检查itemSlots列表是否为空
@@ -172,6 +161,9 @@ public class BackpackManager : MonoBehaviour
             slot.transform.parent.gameObject.SetActive(true); // 激活BackpackPanel
             slot.enabled = true;
 
+            // 修复：先重置所有槽位为空白背景，再赋值物品
+            slot.sprite = emptySlotSprite;
+
             // 打印关键信息
             // Debug.Log($"[背包调试] 第{i}个ItemSlot：激活状态={slot.gameObject.activeSelf}，Image启用={slot.enabled}，尺寸={slot.rectTransform.sizeDelta}，位置={slot.rectTransform.anchoredPosition}，Sprite={slot.sprite?.name ?? "无"}");
         }
@@ -184,6 +176,19 @@ public class BackpackManager : MonoBehaviour
                 itemSlots[i].sprite = collectedItems[i];
                 Debug.Log($"[背包调试] 第{i}个槽位赋值物品：{collectedItems[i].name}");
             }
+            else
+            {
+                Debug.LogWarning("[背包调试] 背包槽位不足，无法显示全部物品");
+                break;
+            }
+        }
+
+        // 新增：选中状态校验（避免选中已被消耗的槽位）
+        if (selectedSlotIndex >= collectedItems.Count)
+        {
+            selectedSlotIndex = -1;
+            selectedItem = null;
+            Debug.Log("[背包调试] 选中槽位超出物品数量，已重置选中状态");
         }
     }
 
@@ -201,6 +206,14 @@ public class BackpackManager : MonoBehaviour
         Debug.Log($"[背包选中] 背包物品数量：{collectedItems.Count}");
         Debug.Log($"[背包选中] 当前selectedItem：{(selectedItem != null ? selectedItem.name : "null")}");
 
+        if (slotIndex < 0 || slotIndex >= collectedItems.Count)
+        {
+            Debug.LogError($"[背包选中] × 槽位索引超出范围: {slotIndex}，背包物品数量: {collectedItems.Count}");
+            Debug.LogError($"[背包选中] 提示：槽位索引应该从0开始，最大为 {collectedItems.Count - 1}");
+            // 重置选中状态，避免错误
+            selectedItem = null;
+            return;
+        }
         // 1. 验证槽位索引是否有效
         if (slotIndex < 0)
         {
@@ -303,12 +316,23 @@ public class BackpackManager : MonoBehaviour
         switch (matchKey)
         {
             // 案例1：螺丝刀与布谷鸟交互（原有逻辑，保持不变）
-            case "luosidao_CuckooBird":
-                // 1. 移除背包中的螺丝刀（保持原有）
+            // BackpackManager.cs - OnInteractWithObject 方法的镊子+弹簧分支补充
+            case "niezi_Spring":
+            case "niezi_spring":
+            case "Niezi_Spring":
+            case "Niezi_spring":
+                Debug.Log($"[镊子+弹簧] ✓ 匹配成功！开始交互");
+                // 补充：校验ClockManager实例
+                if (ClockManager.Instance == null)
+                {
+                    Debug.LogError("[镊子+弹簧] 找不到ClockManager实例！");
+                    return;
+                }
+                // 1. 触发弹簧隐藏+收集
+                ClockManager.Instance.HideSpringAndCollect();
+                // 2. 消耗镊子（核心：销毁背包中的镊子）
                 ConsumeSelectedItem();
-                // 2. 调用布谷鸟的ShowSpring方法，激活弹簧显示（替换原有的Instantiate）
-                interactObj.ShowSpring();
-                Debug.Log("使用螺丝刀，布谷鸟弹出弹簧！");
+                Debug.Log($"[镊子+弹簧] ✓ 交互完成：弹簧已收集，镊子已消耗");
                 break;
             // 场景A：镜片与荆棘交互（明确匹配，确保交互成功）
             case "jingpian_Vine":
@@ -393,13 +417,25 @@ public class BackpackManager : MonoBehaviour
     // ---------- 工具方法 ----------
     private void ConsumeSelectedItem()
     {
-        if (selectedSlotIndex >= 0 && selectedSlotIndex < collectedItems.Count)
+        // 修复：增加安全校验，避免索引越界
+        if (selectedSlotIndex < 0 || selectedSlotIndex >= collectedItems.Count)
         {
-            collectedItems.RemoveAt(selectedSlotIndex);
-            UpdateBackpackUI();
+            Debug.LogError($"[消耗物品] 选中槽位索引无效：{selectedSlotIndex}，物品总数：{collectedItems.Count}");
+            selectedSlotIndex = -1;
+            selectedItem = null;
+            return;
         }
+
+        // 记录消耗的物品名称，便于调试
+        string consumedItemName = collectedItems[selectedSlotIndex]?.name ?? "未知物品";
+        collectedItems.RemoveAt(selectedSlotIndex);
+
+        // 修复：先重置选中状态，再更新UI（避免UI更新时选中状态不一致）
         selectedSlotIndex = -1;
         selectedItem = null;
+
+        UpdateBackpackUI();
+        Debug.Log($"[消耗物品] 已消耗：{consumedItemName}，剩余物品数量：{collectedItems.Count}");
     }
 
 }

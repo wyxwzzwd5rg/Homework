@@ -10,8 +10,7 @@ public class ClockManager : MonoBehaviour
     // public GameObject cuckooBird; // 拖入布谷鸟对象
     // public GameObject secretCompartment; // 拖入暗格对象
     // 替换：删除原VideoPlayer变量，新增MediaPlayer变量
-    public Canvas targetClockCanvas1; // 绑定ClockCanvas(1)
-    public Camera targetClockCamera1; // 绑定ClockCamera（1）
+
     public GameObject videoCanvas; // 拖入VideoCanvas
     public VideoPlayer nativeVideoPlayer;  // 拖入VideoPlayerRawImage上的MediaPlayer组件
     public float correctHourAngle = 210f; // 9点对应的角度（从12点顺时针转270度）
@@ -19,6 +18,12 @@ public class ClockManager : MonoBehaviour
     private bool isSolved = false;
     public Camera clockV1Camera; // 拖入ClockV1Camera
     public GameObject originalClockCanvas; // 拖入原时钟画布（如ClockCanvas）
+
+    public GameObject clockPivot; // 拖入控制时针分针中心点的空物体（ClockPivot）
+    public GameObject originalBackground; // 拖入原背景图（IMG_7709，不在ClockCanvas下）
+    public GameObject newBackground; // 拖入新的背景图（需要显示的新背景）
+    public GameObject tanhuang; // 拖入ClockCanvas下的弹簧（MinuteHand tanhuang）
+    public Sprite springSprite;
     void Awake()
     {
         if (Instance == null)
@@ -26,7 +31,41 @@ public class ClockManager : MonoBehaviour
         else
             Destroy(gameObject);
     }
+    // ClockManager.cs - HideSpringAndCollect 方法补充容错
+    public void HideSpringAndCollect()
+    {
+        // 1. 隐藏时钟视角的弹簧（核心逻辑）
+        if (tanhuang != null && !tanhuang.activeSelf)
+        {
+            Debug.LogWarning("[时钟弹簧] 弹簧已隐藏，无需重复收集");
+            return;
+        }
+        if (tanhuang != null)
+        {
+            tanhuang.SetActive(false);
+            Debug.Log("[时钟弹簧] 弹簧已隐藏");
+        }
+        else
+        {
+            Debug.LogError("[时钟弹簧] 弹簧对象（tanhuang）未在Inspector赋值！");
+            return;
+        }
 
+        // 2. 收集弹簧到背包（补充：校验sprite和背包实例）
+        if (springSprite == null)
+        {
+            Debug.LogError("[时钟弹簧] springSprite未赋值！请拖入弹簧的Sprite资源");
+            return;
+        }
+        if (BackpackManager.Instance == null)
+        {
+            Debug.LogError("[时钟弹簧] 找不到BackpackManager实例！");
+            return;
+        }
+
+        BackpackManager.Instance.CollectSpring(springSprite);
+        Debug.Log($"[时钟弹簧] 弹簧({springSprite.name})已收集到背包");
+    }
     // 验证当前时间是否为9:15
     public void CheckTime()
     {
@@ -81,17 +120,29 @@ public class ClockManager : MonoBehaviour
 
     private void OnVideoFinished(VideoPlayer vp)
     {
-        // 1. 切换画布：隐藏视频画布，激活目标ClockCanvas1
+        // 1. 基础画布/相机切换：隐藏视频画布，恢复原ClockCanvas和相机
         videoCanvas.SetActive(false);
-        targetClockCanvas1.gameObject.SetActive(true);
-
-        // 2. 切换相机：关闭视频相机，激活目标ClockCamera1
+        originalClockCanvas.SetActive(true);
         clockV1Camera.gameObject.SetActive(false);
-        targetClockCamera1.gameObject.SetActive(true);
-        BackpackManager.Instance?.RefreshBackpackLayer();
-        // 3. 移除事件监听
+        Camera originalCamera = originalClockCanvas.GetComponentInParent<Camera>();
+        if (originalCamera != null)
+        {
+            originalCamera.gameObject.SetActive(true);
+        }
+
+        // 2. 隐藏指定旧元素：时针、分针、ClockPivot、原背景图IMG_7709
+        if (hourHand != null) hourHand.gameObject.SetActive(false); // 隐藏时针
+        if (minuteHand != null) minuteHand.gameObject.SetActive(false); // 隐藏分针
+        if (clockPivot != null) clockPivot.SetActive(false); // 隐藏中心点空物体
+        if (originalBackground != null) originalBackground.SetActive(false); // 隐藏原背景图
+
+        // 3. 显示新元素：新背景图 + ClockCanvas下的弹簧
+        if (newBackground != null) newBackground.SetActive(true); // 显示新背景
+        if (tanhuang != null) tanhuang.SetActive(true); // 显示弹簧
+
+        // 4. 移除事件监听（避免重复触发）
         nativeVideoPlayer.loopPointReached -= OnVideoFinished;
-        Debug.Log("视频播放结束，已跳转到ClockCanvas(1)与ClockCamera（1）");
+        Debug.Log("视频播放结束，已恢复ClockCanvas并切换元素显隐");
     }
 }
 // 打开暗格（示例：向上移动暗格）

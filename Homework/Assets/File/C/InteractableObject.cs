@@ -53,6 +53,11 @@ public class InteractableObject : MonoBehaviour
                 }
             }
         }
+        if (objectTag == "Spring")
+        {
+            Debug.Log($"[弹簧交互] {gameObject.name} 已配置为可交互，Tag=Spring");
+        }
+
     }
     [Tooltip("交互成功时触发的事件（可在Inspector绑定隐藏藤蔓、打开抽屉等逻辑）")]
     public UnityEvent onInteractSuccess;
@@ -85,47 +90,52 @@ public class InteractableObject : MonoBehaviour
     void OnMouseDown()
     {
         Debug.Log($"[点击检测] {gameObject.name} 被点击了！");
-
-        // 检查是否点击到了UI元素（但允许背包等小窗口UI，只阻止全屏UI）
-        if (UnityEngine.EventSystems.EventSystem.current != null &&
-            UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
+        if (Camera.current == ClockManager.Instance?.clockV1Camera)
         {
-            // 获取点击到的UI对象
-            UnityEngine.EventSystems.PointerEventData pointerData = new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current);
-            pointerData.position = Input.mousePosition;
-            var results = new System.Collections.Generic.List<UnityEngine.EventSystems.RaycastResult>();
-            UnityEngine.EventSystems.EventSystem.current.RaycastAll(pointerData, results);
-
-            // 检查是否点击到了全屏UI（比如密码面板、放大UI等）
-            bool isBlockingUI = false;
-            foreach (var result in results)
+            Debug.Log("[点击检测] 时钟视角下，跳过UI拦截检测");
+        }
+        else
+        {
+            // 检查是否点击到了UI元素（但允许背包等小窗口UI，只阻止全屏UI）
+            if (UnityEngine.EventSystems.EventSystem.current != null &&
+            UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
             {
-                // 如果点击到的是Canvas根节点或全屏面板，则阻止交互
-                if (result.gameObject.name.Contains("Panel") ||
-                    result.gameObject.name.Contains("Canvas") ||
-                    result.gameObject.GetComponent<Canvas>() != null)
+                // 获取点击到的UI对象
+                UnityEngine.EventSystems.PointerEventData pointerData = new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current);
+                pointerData.position = Input.mousePosition;
+                var results = new System.Collections.Generic.List<UnityEngine.EventSystems.RaycastResult>();
+                UnityEngine.EventSystems.EventSystem.current.RaycastAll(pointerData, results);
+
+                // 检查是否点击到了全屏UI（比如密码面板、放大UI等）
+                bool isBlockingUI = false;
+                foreach (var result in results)
                 {
-                    // 检查是否是背包UI（背包UI应该允许交互继续）
-                    if (!result.gameObject.name.Contains("Backpack") &&
-                        !result.gameObject.name.Contains("ItemSlot"))
+                    // 如果点击到的是Canvas根节点或全屏面板，则阻止交互
+                    if (result.gameObject.name.Contains("Panel") ||
+                        result.gameObject.name.Contains("Canvas") ||
+                        result.gameObject.GetComponent<Canvas>() != null)
                     {
-                        isBlockingUI = true;
-                        Debug.Log($"[点击检测] 点击到了全屏UI：{result.gameObject.name}，阻止交互");
-                        break;
+                        // 检查是否是背包UI（背包UI应该允许交互继续）
+                        if (!result.gameObject.name.Contains("Backpack") &&
+                            !result.gameObject.name.Contains("ItemSlot"))
+                        {
+                            isBlockingUI = true;
+                            Debug.Log($"[点击检测] 点击到了全屏UI：{result.gameObject.name}，阻止交互");
+                            break;
+                        }
                     }
                 }
-            }
 
-            if (isBlockingUI)
-            {
-                return;
-            }
-            else
-            {
-                Debug.Log($"[点击检测] 点击到了UI但允许交互继续（可能是背包等小窗口）");
+                if (isBlockingUI)
+                {
+                    return;
+                }
+                else
+                {
+                    Debug.Log($"[点击检测] 点击到了UI但允许交互继续（可能是背包等小窗口）");
+                }
             }
         }
-
         Debug.Log($"[点击检测] alwaysActive={alwaysActive}，isCuckooActive={isCuckooActive}");
         if (!alwaysActive && !isCuckooActive)
         {

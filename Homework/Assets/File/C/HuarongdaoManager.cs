@@ -8,13 +8,12 @@ public class HuarongdaoManager : MonoBehaviour
     public List<Button> puzzlePieces; // 8个拼图按钮（按3×3网格顺序排列，索引0-7）
     public int gridSize = 3; // 网格尺寸（3×3）
 
-    [Header("暗格配置")]
-    public GameObject secretCompartment; // 暗格容器
-    public string bladeObjectName = "Blade"; // 刀片物体名称
+    [Header("刀子显示配置")]
+    public GameObject bladeObj; // 刀子游戏对象（直接拖入场景中的刀子）
 
     private int emptyIndex = 7; // 空位对应的拼图列表索引（初始在最后一个拼图位置）
     private bool isPuzzleSolved = false;
-    private List<Sprite> originalSprites = new List<Sprite>(); // 存储每个按钮的初始图片（从Inspector设置的图片）
+    private List<Sprite> originalSprites = new List<Sprite>(); // 存储每个按钮的初始图片
     private string[] correctPieceNames; // 正确的拼图名称顺序（Piece_1~Piece_8）
 
     void Start()
@@ -24,9 +23,7 @@ public class HuarongdaoManager : MonoBehaviour
         for (int i = 0; i < puzzlePieces.Count; i++)
         {
             correctPieceNames[i] = $"Piece_{i + 1}";
-            // 记录每个按钮的初始图片（从Inspector设置的图片）
             originalSprites.Add(puzzlePieces[i].image.sprite);
-            // 初始化按钮名称（用于通关判断）
             puzzlePieces[i].gameObject.name = correctPieceNames[i];
         }
 
@@ -41,31 +38,29 @@ public class HuarongdaoManager : MonoBehaviour
         // 开局打乱拼图
         ShufflePuzzle();
 
-        // 初始化暗格状态（隐藏刀片）
-        InitSecretCompartment();
+        // 初始化刀子：仅隐藏
+        InitBlade();
     }
 
     /// <summary>
-    /// 打乱拼图（使用初始图片，不依赖外部文件）
+    /// 打乱拼图（使用初始图片）
     /// </summary>
     public void ShufflePuzzle()
     {
         isPuzzleSolved = false;
         List<int> validShuffledIndices = GenerateValidShuffledIndices();
 
-        // 同步乱序到9个位置
+        // 同步乱序到8个拼图位置
         for (int i = 0; i < puzzlePieces.Count; i++)
         {
             int originalIdx = validShuffledIndices[i];
-            // 若当前位置是空位（originalIdx=8），则显示空位图片
-            if (originalIdx == 8)
+            if (originalIdx == 8) // 空位
             {
                 puzzlePieces[i].gameObject.name = "Piece_Empty";
                 puzzlePieces[i].image.sprite = GetEmptySprite();
             }
             else
             {
-                // 否则显示对应数字的图片（originalIdx=0~7对应Piece_1~Piece_8）
                 puzzlePieces[i].gameObject.name = $"Piece_{originalIdx + 1}";
                 puzzlePieces[i].image.sprite = originalSprites[originalIdx];
             }
@@ -79,31 +74,32 @@ public class HuarongdaoManager : MonoBehaviour
     {
         if (isPuzzleSolved) return;
 
-        // 判断是否与空位相邻（仅相邻可移动）
+        // 判断是否与空位相邻
         if (!IsAdjacentToEmpty(clickedPieceIdx))
         {
             Debug.Log($"拼图{clickedPieceIdx + 1}不与空位相邻，无法移动");
             return;
         }
 
-        // 交换拼图与空位（更新图片和名称）
+        // 交换拼图与空位
         SwapPieceWithEmpty(clickedPieceIdx);
 
         // 检查是否通关
         if (IsPuzzleComplete())
         {
             isPuzzleSolved = true;
-            OpenSecretCompartment();
-            Debug.Log("华容道通关！暗格已打开");
+            ShowBladeDirectly(); // 通关后直接显示刀子
+            GameData.AddCollectedItem("carpet_puzzle_completed");
+            Debug.Log("华容道通关！刀子已显示，可点击收集");
         }
     }
 
     /// <summary>
-    /// 生成有解的乱序索引（对应originalSprites的索引）
+    /// 生成有解的乱序索引
     /// </summary>
     private List<int> GenerateValidShuffledIndices()
     {
-        List<int> indices = new List<int> { 0, 1, 2, 3, 4, 5, 6, 7, 8 }; // 9个位置的索引
+        List<int> indices = new List<int> { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
         int maxAttempts = 100;
         int attempts = 0;
 
@@ -116,15 +112,13 @@ public class HuarongdaoManager : MonoBehaviour
                 (indices[i], indices[randomIdx]) = (indices[randomIdx], indices[i]);
             }
 
-            // 找到空位的索引（Piece_Empty的索引是8）
+            // 找到空位的索引
             int emptyPos = indices.IndexOf(8);
-            // 计算逆序数（排除空位）
             List<int> numsWithoutEmpty = indices.FindAll(idx => idx != 8);
             int inversions = CalculateInversions(numsWithoutEmpty);
-            // 3×3奇数网格：逆序数为偶数则有解
             if (inversions % 2 == 0)
             {
-                emptyIndex = emptyPos; // 更新空位索引
+                emptyIndex = emptyPos;
                 return indices;
             }
             attempts++;
@@ -135,7 +129,7 @@ public class HuarongdaoManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 计算索引数组的逆序数（判断乱序是否有解）
+    /// 计算逆序数
     /// </summary>
     private int CalculateInversions(List<int> arr)
     {
@@ -158,40 +152,34 @@ public class HuarongdaoManager : MonoBehaviour
     /// </summary>
     private bool IsAdjacentToEmpty(int pieceIdx)
     {
-        // 3×3网格，计算拼图和空位的行列
         int pieceRow = pieceIdx / 3;
         int pieceCol = pieceIdx % 3;
         int emptyRow = emptyIndex / 3;
         int emptyCol = emptyIndex % 3;
 
-        // 相邻判定：同一行/列，且行列差为1
         return (pieceRow == emptyRow && Mathf.Abs(pieceCol - emptyCol) == 1) ||
                (pieceCol == emptyCol && Mathf.Abs(pieceRow - emptyRow) == 1);
     }
 
     /// <summary>
-    /// 交换拼图与空位（更新图片和名称）
+    /// 交换拼图与空位
     /// </summary>
     private void SwapPieceWithEmpty(int pieceIdx)
     {
-        // 保存拼图的名称和图片
         string tempName = puzzlePieces[pieceIdx].gameObject.name;
         Sprite tempSprite = puzzlePieces[pieceIdx].image.sprite;
 
-        // 拼图 ← 空位（更新为空位的图片和名称）
         puzzlePieces[pieceIdx].gameObject.name = $"Piece_Empty";
         puzzlePieces[pieceIdx].image.sprite = GetEmptySprite();
 
-        // 空位 ← 拼图（更新为拼图的图片和名称）
         puzzlePieces[emptyIndex].gameObject.name = tempName;
         puzzlePieces[emptyIndex].image.sprite = tempSprite;
 
-        // 更新空位索引
         emptyIndex = pieceIdx;
     }
 
     /// <summary>
-    /// 检查拼图是否完成（按正确顺序排列）
+    /// 检查拼图是否完成
     /// </summary>
     private bool IsPuzzleComplete()
     {
@@ -207,55 +195,71 @@ public class HuarongdaoManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 初始化暗格（隐藏刀片）
+    /// 初始化刀子：仅隐藏
     /// </summary>
-    private void InitSecretCompartment()
+    private void InitBlade()
     {
-        if (secretCompartment == null) return;
-
-        Transform blade = secretCompartment.transform.Find(bladeObjectName);
-        if (blade != null)
+        if (bladeObj == null)
         {
-            blade.gameObject.SetActive(false);
+            Debug.LogError("未指定刀子对象！请在Inspector中拖入bladeObj");
+            return;
         }
-        else
+        bladeObj.SetActive(false);
+
+        // 确保刀子有收集组件（保留原有逻辑，不修改）
+        EnsureCollectHandlerOnBlade();
+    }
+
+    /// <summary>
+    /// 确保刀子有ItemClickHandler组件（适配现有脚本）
+    /// </summary>
+    private void EnsureCollectHandlerOnBlade()
+    {
+        ItemClickHandler handler = bladeObj.GetComponent<ItemClickHandler>();
+        if (handler == null)
         {
-            Debug.LogError($"暗格中未找到名为{bladeObjectName}的物体");
+            handler = bladeObj.AddComponent<ItemClickHandler>();
+        }
+        handler.itemId = "blade"; // 与收集逻辑保持一致
+    }
+
+    /// <summary>
+    /// 通关后直接显示刀子（仅激活对象，无其他逻辑）
+    /// </summary>
+    private void ShowBladeDirectly()
+    {
+        if (bladeObj == null) return;
+        // 未收集过才显示
+        if (!GameData.IsItemCollected("blade"))
+        {
+            bladeObj.SetActive(true);
+            Debug.Log("刀子已显示，可点击收集");
         }
     }
 
     /// <summary>
-    /// 打开暗格（显示刀片）
-    /// </summary>
-    private void OpenSecretCompartment()
-    {
-        if (secretCompartment == null) return;
-
-        Transform blade = secretCompartment.transform.Find(bladeObjectName);
-        if (blade != null)
-        {
-            blade.gameObject.SetActive(true);
-        }
-    }
-
-    /// <summary>
-    /// 获取空位图片（透明图，无需外部资源）
+    /// 获取空位透明图片
     /// </summary>
     private Sprite GetEmptySprite()
     {
-        // 动态生成一个1x1的透明图作为空位
-        Texture2D emptyTexture = new Texture2D(1, 1, TextureFormat.ARGB32, false);
-        emptyTexture.SetPixel(0, 0, new Color(0, 0, 0, 0)); // 透明色
-        emptyTexture.Apply();
-        return Sprite.Create(emptyTexture, new Rect(0, 0, 1, 1), Vector2.one * 0.5f);
+        Texture2D emptyTex = new Texture2D(1, 1);
+        emptyTex.SetPixel(0, 0, new Color(0, 0, 0, 0));
+        emptyTex.Apply();
+        return Sprite.Create(emptyTex, new Rect(0, 0, 1, 1), Vector2.one * 0.5f);
     }
 
     /// <summary>
-    /// 重新开始游戏（外部按钮可调用）
+    /// 重新开始游戏（外部按钮调用）
     /// </summary>
     public void RestartGame()
     {
         ShufflePuzzle();
-        InitSecretCompartment();
+        isPuzzleSolved = false;
+
+        // 重置刀子状态：仅隐藏
+        if (bladeObj != null && !GameData.IsItemCollected("blade"))
+        {
+            bladeObj.SetActive(false);
+        }
     }
 }
